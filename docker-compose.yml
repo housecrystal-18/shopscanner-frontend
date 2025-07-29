@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  shopscanner-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: shopscanner-frontend
+    ports:
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+    networks:
+      - shopscanner-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shopscanner-frontend.rule=Host(`shopscanner.com`)"
+      - "traefik.http.routers.shopscanner-frontend.tls=true"
+      - "traefik.http.routers.shopscanner-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.shopscanner-frontend.loadbalancer.server.port=80"
+
+  # Development service (optional)
+  shopscanner-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: shopscanner-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+      - VITE_API_BASE_URL=http://localhost:3001
+    networks:
+      - shopscanner-network
+    profiles:
+      - dev
+
+networks:
+  shopscanner-network:
+    driver: bridge
+
+volumes:
+  nginx-logs:
+    driver: local

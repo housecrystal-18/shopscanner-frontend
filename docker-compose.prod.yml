@@ -1,0 +1,101 @@
+version: '3.8'
+
+services:
+  shopscanner-frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: shopscanner-frontend-prod
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - NODE_ENV=production
+    volumes:
+      - ./nginx/logs:/var/log/nginx
+      - ./ssl:/etc/nginx/ssl:ro
+    networks:
+      - shopscanner-prod-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.shopscanner-frontend.rule=Host(`shopscanner.com`)"
+      - "traefik.http.routers.shopscanner-frontend.tls=true"
+      - "traefik.http.routers.shopscanner-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.shopscanner-frontend.loadbalancer.server.port=80"
+      - "traefik.http.middlewares.shopscanner-headers.headers.customrequestheaders.X-Forwarded-Proto=https"
+      - "traefik.http.routers.shopscanner-frontend.middlewares=shopscanner-headers"
+
+  # Redis for session storage and caching
+  redis:
+    image: redis:7-alpine
+    container_name: shopscanner-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - shopscanner-prod-network
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 30s
+      timeout: 3s
+      retries: 5
+
+  # Traefik reverse proxy (optional)
+  traefik:
+    image: traefik:v2.10
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik
+      - ./ssl:/ssl
+    networks:
+      - shopscanner-prod-network
+    command:
+      - --api.dashboard=true
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/ssl/acme.json
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+    profiles:
+      - traefik
+
+networks:
+  shopscanner-prod-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  redis-data:
+    driver: local
+  nginx-logs:
+    driver: local
