@@ -6,6 +6,9 @@ export function SimpleApp() {
   const [password, setPassword] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
+  const [productUrl, setProductUrl] = useState('');
+  const [isScanning, setIsScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<any>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +25,46 @@ export function SimpleApp() {
     setUser(null);
     setEmail('');
     setPassword('');
+    setScanResult(null);
+    setProductUrl('');
+  };
+
+  const handleUrlScan = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!productUrl.trim()) {
+      alert('Please enter a product URL');
+      return;
+    }
+
+    setIsScanning(true);
+    
+    // Simulate scanning with demo data
+    setTimeout(() => {
+      const demoResults = {
+        url: productUrl,
+        authenticity: {
+          score: Math.floor(Math.random() * 40) + 60, // 60-100
+          verified: Math.random() > 0.3,
+          productType: ['authentic', 'mass_produced', 'dropshipped'][Math.floor(Math.random() * 3)],
+          flags: []
+        },
+        product: {
+          name: 'iPhone 15 Pro',
+          brand: 'Apple',
+          price: '$999.99',
+          store: new URL(productUrl).hostname.replace('www.', ''),
+          category: 'Electronics'
+        },
+        analysis: {
+          storeReputation: Math.floor(Math.random() * 30) + 70,
+          priceComparison: Math.random() > 0.5 ? 'competitive' : 'below_market',
+          riskLevel: Math.random() > 0.7 ? 'low' : 'medium'
+        }
+      };
+      
+      setScanResult(demoResults);
+      setIsScanning(false);
+    }, 2000);
   };
 
   if (isLoggedIn) {
@@ -48,6 +91,84 @@ export function SimpleApp() {
 
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
+            {/* URL Scanner Section */}
+            <div className="bg-white rounded-lg shadow mb-8">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-900">🔍 Scan Product URL for Authenticity</h2>
+                <p className="text-sm text-gray-600 mt-1">Paste any product URL to analyze authenticity and get insights</p>
+              </div>
+              <div className="p-6">
+                <form onSubmit={handleUrlScan} className="space-y-4">
+                  <div>
+                    <label htmlFor="productUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                      Product URL
+                    </label>
+                    <input
+                      id="productUrl"
+                      type="url"
+                      value={productUrl}
+                      onChange={(e) => setProductUrl(e.target.value)}
+                      placeholder="https://amazon.com/product/..."
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      disabled={isScanning}
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isScanning}
+                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                  >
+                    {isScanning ? 'Scanning...' : 'Scan Product'}
+                  </button>
+                </form>
+
+                {/* Scan Results */}
+                {scanResult && (
+                  <div className="mt-6 p-4 border border-gray-200 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">Scan Results</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Product Info */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-2">Product Details</h4>
+                        <p><strong>Name:</strong> {scanResult.product.name}</p>
+                        <p><strong>Brand:</strong> {scanResult.product.brand}</p>
+                        <p><strong>Price:</strong> {scanResult.product.price}</p>
+                        <p><strong>Store:</strong> {scanResult.product.store}</p>
+                      </div>
+
+                      {/* Authenticity Score */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-2">Authenticity Analysis</h4>
+                        <div className="flex items-center mb-2">
+                          <span className="text-lg font-bold mr-2">{scanResult.authenticity.score}/100</span>
+                          <div className={`px-2 py-1 rounded text-sm font-medium ${
+                            scanResult.authenticity.score >= 80 ? 'bg-green-100 text-green-800' :
+                            scanResult.authenticity.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {scanResult.authenticity.score >= 80 ? 'Likely Authentic' :
+                             scanResult.authenticity.score >= 60 ? 'Moderate Risk' :
+                             'High Risk'}
+                          </div>
+                        </div>
+                        <p><strong>Type:</strong> {scanResult.authenticity.productType}</p>
+                        <p><strong>Store Rep:</strong> {scanResult.analysis.storeReputation}/100</p>
+                        <p><strong>Price:</strong> {scanResult.analysis.priceComparison}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => setScanResult(null)}
+                      className="mt-4 text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Clear Results
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+
             <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
               <div className="text-center">
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
