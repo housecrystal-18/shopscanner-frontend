@@ -4,7 +4,15 @@ import { ScanLine, Shield, TrendingUp, ArrowRight, CheckCircle } from 'lucide-re
 import { useAuth } from '../contexts/AuthContext';
 
 export function HomePage() {
-  const { isAuthenticated } = useAuth();
+  // Safely get auth context with fallback
+  let isAuthenticated = false;
+  try {
+    const auth = useAuth();
+    isAuthenticated = auth.isAuthenticated;
+  } catch (error) {
+    // AuthProvider not ready yet, use defaults
+    isAuthenticated = false;
+  }
 
   const features = [
     {

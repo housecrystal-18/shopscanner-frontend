@@ -27,7 +27,15 @@ export function PricingPage() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const { currentPlan, upgradePlan, isLoading } = useSubscription();
-  const { isAuthenticated } = useAuth();
+  // Safely get auth context with fallback
+  let isAuthenticated = false;
+  try {
+    const auth = useAuth();
+    isAuthenticated = auth.isAuthenticated;
+  } catch (error) {
+    // AuthProvider not ready yet, use defaults
+    isAuthenticated = false;
+  }
 
   const handleUpgrade = async (planId: string) => {
     if (!isAuthenticated) {
