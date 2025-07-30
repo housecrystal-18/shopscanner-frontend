@@ -105,7 +105,7 @@ function getEnvArray(key: string, defaultValue: string[] = []): string[] {
 // Environment configuration
 export const config: EnvironmentConfig = {
   // API Configuration
-  apiBaseUrl: 'https://shopscanner-production.up.railway.app',
+  apiBaseUrl: getEnvVar('VITE_API_URL', 'http://localhost:3001'),
   apiTimeout: 30000,
   
   // Authentication
@@ -136,8 +136,8 @@ export const config: EnvironmentConfig = {
   enableRateLimiting: getEnvBoolean('VITE_ENABLE_RATE_LIMITING', true),
   
   // Development
-  debugMode: false,
-  mockApi: true,
+  debugMode: getEnvBoolean('VITE_DEBUG_MODE', false),
+  mockApi: getEnvBoolean('VITE_MOCK_API', true),
   logLevel: 'info',
   
   // AWS

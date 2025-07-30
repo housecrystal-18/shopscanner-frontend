@@ -179,7 +179,70 @@ export function SimpleApp() {
           storeReputation: storeReputation,
           priceComparison: priceCheck,
           riskLevel: score >= 80 ? 'low' : score >= 60 ? 'medium' : 'high'
-        }
+        },
+        similarProducts: [
+          {
+            store: 'Amazon',
+            price: '$949.99',
+            url: 'https://amazon.com/dp/B0CHX3HJKL',
+            seller: 'Amazon.com',
+            rating: 4.8,
+            reviews: 2341,
+            shipping: 'Free 2-day',
+            authenticity: 95,
+            inStock: true,
+            image: 'https://via.placeholder.com/150x150?text=iPhone+Amazon'
+          },
+          {
+            store: 'Best Buy',
+            price: '$999.99',
+            url: 'https://bestbuy.com/site/apple-iphone-15-pro/6539232.p',
+            seller: 'Best Buy',
+            rating: 4.7,
+            reviews: 1876,
+            shipping: 'Free shipping',
+            authenticity: 98,
+            inStock: true,
+            image: 'https://via.placeholder.com/150x150?text=iPhone+BestBuy'
+          },
+          {
+            store: 'Walmart',
+            price: '$979.99',
+            url: 'https://walmart.com/ip/Apple-iPhone-15-Pro/567891234',
+            seller: 'Walmart',
+            rating: 4.6,
+            reviews: 892,
+            shipping: 'Free pickup',
+            authenticity: 92,
+            inStock: false,
+            image: 'https://via.placeholder.com/150x150?text=iPhone+Walmart'
+          },
+          {
+            store: 'eBay',
+            price: '$899.99',
+            url: 'https://ebay.com/itm/iPhone-15-Pro-128GB/234567890123',
+            seller: 'TechDeals_Pro',
+            rating: 4.3,
+            reviews: 456,
+            shipping: '$15.99',
+            authenticity: 78,
+            inStock: true,
+            image: 'https://via.placeholder.com/150x150?text=iPhone+eBay'
+          },
+          {
+            store: 'Etsy',
+            price: '$89.99',
+            url: 'https://etsy.com/listing/1234567/iphone-case-handmade',
+            seller: 'CraftedCases',
+            rating: 4.9,
+            reviews: 234,
+            shipping: '$5.99',
+            authenticity: 85,
+            inStock: true,
+            image: 'https://via.placeholder.com/150x150?text=Case+Etsy',
+            note: 'Similar iPhone case - handmade leather'
+          }
+        ]
       };
       
       setScanResult(demoResults);
@@ -266,7 +329,7 @@ export function SimpleApp() {
       const manufactureDate = '2024-01-15';
       const currentDate = new Date();
       const prodDate = new Date(manufactureDate);
-      const daysDiff = Math.floor((currentDate - prodDate) / (1000 * 60 * 60 * 24));
+      const daysDiff = Math.floor((currentDate.getTime() - prodDate.getTime()) / (1000 * 60 * 60 * 24));
       
       if (daysDiff < 365 && daysDiff > 0) {
         qrPositiveFactors.push('Recent manufacturing date confirmed');
@@ -481,7 +544,7 @@ export function SimpleApp() {
                         <div className="bg-green-50 p-3 rounded-lg">
                           <h5 className="font-medium text-green-800 mb-2">✅ Positive Indicators</h5>
                           <ul className="text-sm text-green-700 space-y-1">
-                            {scanResult.authenticity.explanation?.positiveFactors.map((factor, index) => (
+                            {scanResult.authenticity.explanation?.positiveFactors.map((factor: string, index: number) => (
                               <li key={index}>• {factor}</li>
                             ))}
                           </ul>
@@ -492,7 +555,7 @@ export function SimpleApp() {
                           <h5 className="font-medium text-red-800 mb-2">⚠️ Concerns</h5>
                           <ul className="text-sm text-red-700 space-y-1">
                             {scanResult.authenticity.explanation?.negativeFactors.length > 0 ? (
-                              scanResult.authenticity.explanation.negativeFactors.map((factor, index) => (
+                              scanResult.authenticity.explanation.negativeFactors.map((factor: string, index: number) => (
                                 <li key={index}>• {factor}</li>
                               ))
                             ) : (
@@ -506,7 +569,7 @@ export function SimpleApp() {
                       <div className="bg-gray-50 p-4 rounded-lg mb-4">
                         <h5 className="font-medium text-gray-800 mb-3">📊 Detailed Scoring Analysis</h5>
                         <div className="space-y-4">
-                          {scanResult.authenticity.explanation?.scoringBreakdown.map((item, index) => (
+                          {scanResult.authenticity.explanation?.scoringBreakdown.map((item: any, index: number) => (
                             <div key={index} className="border-l-4 border-gray-300 pl-4">
                               <div className="flex justify-between items-start mb-2">
                                 <span className="font-medium text-gray-800">{item.factor}</span>
@@ -597,7 +660,7 @@ export function SimpleApp() {
                         <div className="bg-green-50 p-3 rounded-lg">
                           <h5 className="font-medium text-green-800 mb-2">✅ Verification Passed</h5>
                           <ul className="text-sm text-green-700 space-y-1">
-                            {qrResult.authenticity.explanation?.positiveFactors.map((factor, index) => (
+                            {qrResult.authenticity.explanation?.positiveFactors.map((factor: string, index: number) => (
                               <li key={index}>• {factor}</li>
                             ))}
                           </ul>
@@ -608,7 +671,7 @@ export function SimpleApp() {
                           <h5 className="font-medium text-red-800 mb-2">⚠️ Verification Failed</h5>
                           <ul className="text-sm text-red-700 space-y-1">
                             {qrResult.authenticity.explanation?.negativeFactors.length > 0 ? (
-                              qrResult.authenticity.explanation.negativeFactors.map((factor, index) => (
+                              qrResult.authenticity.explanation.negativeFactors.map((factor: string, index: number) => (
                                 <li key={index}>• {factor}</li>
                               ))
                             ) : (
@@ -622,7 +685,7 @@ export function SimpleApp() {
                       <div className="bg-gray-50 p-4 rounded-lg mb-4">
                         <h5 className="font-medium text-gray-800 mb-3">📊 Detailed Verification Analysis</h5>
                         <div className="space-y-4">
-                          {qrResult.authenticity.explanation?.scoringBreakdown.map((item, index) => (
+                          {qrResult.authenticity.explanation?.scoringBreakdown.map((item: any, index: number) => (
                             <div key={index} className="border-l-4 border-blue-300 pl-4">
                               <div className="flex justify-between items-start mb-2">
                                 <span className="font-medium text-gray-800">{item.factor}</span>
