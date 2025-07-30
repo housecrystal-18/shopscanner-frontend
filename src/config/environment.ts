@@ -73,11 +73,11 @@ interface EnvironmentConfig {
 // Type-safe environment variable getter
 function getEnvVar(key: string, defaultValue?: string): string {
   const value = import.meta.env[key];
-  if (value === undefined) {
+  if (value === undefined || value === '' || value.startsWith('=')) {
     if (defaultValue !== undefined) {
       return defaultValue;
     }
-    console.warn(`Environment variable ${key} is not defined`);
+    console.warn(`Environment variable ${key} is not defined or invalid`);
     return '';
   }
   return value;
