@@ -173,7 +173,7 @@ function App() {
 
               {/* Seller routes */}
               <Route path="/dashboard" element={
-                <ProtectedRoute requiredUserType="seller">
+                <ProtectedRoute requiredUserType="business">
                   <Layout>
                     <DashboardPage />
                   </Layout>

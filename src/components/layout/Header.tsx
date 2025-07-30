@@ -30,7 +30,7 @@ export function Header() {
     { name: 'Profile', href: '/profile', icon: User },
     { name: 'Subscription', href: '/subscription', icon: Shield },
     { name: 'Wishlist', href: '/wishlist', icon: Heart },
-    ...(user?.type === 'seller' || user?.type === 'both' 
+    ...(user?.type === 'business' 
       ? [{ name: 'Dashboard', href: '/dashboard', icon: ShoppingBag }] 
       : []
     ),

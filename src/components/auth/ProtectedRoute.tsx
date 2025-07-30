@@ -5,7 +5,7 @@ import { LoadingSpinner } from '../ui/LoadingSpinner';
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  requiredUserType?: 'buyer' | 'seller' | 'both';
+  requiredUserType?: 'consumer' | 'business';
 }
 
 export function ProtectedRoute({ children, requiredUserType }: ProtectedRouteProps) {

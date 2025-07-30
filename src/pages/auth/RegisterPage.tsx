@@ -10,7 +10,7 @@ export function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    type: 'buyer' as 'buyer' | 'seller' | 'both',
+    type: 'consumer' as 'consumer' | 'business',
     businessName: '',
     acceptTerms: false,
   });
@@ -69,8 +69,8 @@ export function RegisterPage() {
       newErrors.confirmPassword = 'Passwords do not match';
     }
 
-    if ((formData.type === 'seller' || formData.type === 'both') && !formData.businessName.trim()) {
-      newErrors.businessName = 'Business name is required for sellers';
+    if (formData.type === 'business' && !formData.businessName.trim()) {
+      newErrors.businessName = 'Business name is required for businesses';
     }
 
     if (!formData.acceptTerms) {
@@ -190,13 +190,12 @@ export function RegisterPage() {
             onChange={handleChange}
             className="form-input"
           >
-            <option value="buyer">Buyer - I want to shop and compare prices</option>
-            <option value="seller">Seller - I want to sell products</option>
-            <option value="both">Both - I want to buy and sell</option>
+            <option value="consumer">Consumer - I want to shop and compare prices</option>
+            <option value="business">Business - I want to sell products</option>
           </select>
         </div>
 
-        {(formData.type === 'seller' || formData.type === 'both') && (
+        {formData.type === 'business' && (
           <div>
             <label htmlFor="businessName" className="form-label">
               Business name

@@ -13,7 +13,7 @@ interface AuthContextType {
     name: string;
     email: string;
     password: string;
-    type: 'buyer' | 'seller' | 'both';
+    type: 'consumer' | 'business';
     businessName?: string;
   }) => Promise<void>;
   logout: () => void;
@@ -92,7 +92,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     name: string;
     email: string;
     password: string;
-    type: 'buyer' | 'seller' | 'both';
+    type: 'consumer' | 'business';
     businessName?: string;
   }): Promise<void> => {
     try {
