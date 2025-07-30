@@ -1,6 +1,8 @@
 import axios, { AxiosResponse } from 'axios';
+import { config } from '../config/environment';
+import { mockApi } from '../services/mockApi';
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_BASE_URL = config.apiBaseUrl;
 
 // Create axios instance
 export const api = axios.create({
@@ -44,8 +46,8 @@ export interface User {
   id: string;
   name: string;
   email: string;
-  type: 'buyer' | 'seller' | 'both';
-  plan?: 'free' | 'monthly' | 'yearly';
+  type: 'consumer' | 'business';
+  plan?: 'free' | 'premium' | 'annual';
   businessName?: string;
   businessUrl?: string;
 }
@@ -159,16 +161,16 @@ export const authAPI = {
     name: string;
     email: string;
     password: string;
-    type: 'buyer' | 'seller' | 'both';
+    type: 'consumer' | 'business';
     businessName?: string;
   }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> =>
-    api.post('/api/auth/register', data),
+    config.mockApi ? Promise.resolve({ data: mockApi.auth.register(data) } as any) : api.post('/api/auth/register', data),
 
   login: (data: {
     email: string;
     password: string;
   }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> =>
-    api.post('/api/auth/login', data),
+    config.mockApi ? Promise.resolve({ data: mockApi.auth.login(data.email, data.password) } as any) : api.post('/api/auth/login', data),
 
   me: (): Promise<AxiosResponse<{ success: boolean; user: User }>> =>
     api.get('/api/auth/me'),
@@ -190,10 +192,10 @@ export const productsAPI = {
     inStock?: boolean;
     featured?: boolean;
   }): Promise<AxiosResponse<{ success: boolean; data: Product[]; pagination: any }>> =>
-    api.get('/api/products', { params }),
+    config.mockApi ? Promise.resolve({ data: mockApi.products.list(params) } as any) : api.get('/api/products', { params }),
 
   getProduct: (id: string): Promise<AxiosResponse<{ success: boolean; data: Product }>> =>
-    api.get(`/api/products/${id}`),
+    config.mockApi ? Promise.resolve({ data: mockApi.products.getById(id) } as any) : api.get(`/api/products/${id}`),
 
   createProduct: (data: Partial<Product>): Promise<AxiosResponse<{ success: boolean; data: Product }>> =>
     api.post('/api/products', data),
