@@ -45,25 +45,114 @@ export function SimpleApp() {
     
     // Simulate scanning with demo data
     setTimeout(() => {
+      const score = Math.floor(Math.random() * 40) + 60; // 60-100
+      const storeReputation = Math.floor(Math.random() * 30) + 70;
+      const priceCheck = Math.random() > 0.5 ? 'competitive' : 'below_market';
+      const isVerified = Math.random() > 0.3;
+      const productType = ['authentic', 'mass_produced', 'dropshipped'][Math.floor(Math.random() * 3)];
+      
+      // Generate scoring explanation
+      const scoringFactors = [];
+      const positiveFactors = [];
+      const negativeFactors = [];
+      
+      // Store reputation analysis
+      if (storeReputation >= 85) {
+        positiveFactors.push(`High store reputation (${storeReputation}/100)`);
+        scoringFactors.push({ factor: 'Store Reputation', impact: '+15', reason: 'Highly trusted retailer with excellent track record' });
+      } else if (storeReputation >= 70) {
+        positiveFactors.push(`Good store reputation (${storeReputation}/100)`);
+        scoringFactors.push({ factor: 'Store Reputation', impact: '+10', reason: 'Reputable store with positive customer feedback' });
+      } else {
+        negativeFactors.push(`Low store reputation (${storeReputation}/100)`);
+        scoringFactors.push({ factor: 'Store Reputation', impact: '-15', reason: 'Limited reputation or mixed customer reviews' });
+      }
+      
+      // Price analysis
+      if (priceCheck === 'competitive') {
+        positiveFactors.push('Market-competitive pricing');
+        scoringFactors.push({ factor: 'Price Analysis', impact: '+10', reason: 'Price aligns with market averages, suggests legitimate source' });
+      } else {
+        negativeFactors.push('Below market price detected');
+        scoringFactors.push({ factor: 'Price Analysis', impact: '-10', reason: 'Unusually low price may indicate counterfeit or damaged goods' });
+      }
+      
+      // Product type analysis
+      if (productType === 'authentic') {
+        positiveFactors.push('Official product listing detected');
+        scoringFactors.push({ factor: 'Product Authenticity', impact: '+20', reason: 'Product matches official specifications and descriptions' });
+      } else if (productType === 'mass_produced') {
+        positiveFactors.push('Mass-produced item verified');
+        scoringFactors.push({ factor: 'Product Authenticity', impact: '+5', reason: 'Standard manufacturing process confirmed' });
+      } else {
+        negativeFactors.push('Dropshipped product detected');
+        scoringFactors.push({ factor: 'Product Authenticity', impact: '-5', reason: 'Dropshipped items may have quality or authenticity concerns' });
+      }
+      
+      // URL analysis
+      const domain = new URL(productUrl).hostname.replace('www.', '');
+      if (['amazon.com', 'ebay.com', 'bestbuy.com', 'walmart.com', 'target.com'].includes(domain)) {
+        positiveFactors.push('Major retailer verified');
+        scoringFactors.push({ factor: 'Domain Trust', impact: '+15', reason: 'Listed on major trusted e-commerce platform' });
+      } else if (domain.includes('official') || domain.includes('store')) {
+        positiveFactors.push('Official store detected');
+        scoringFactors.push({ factor: 'Domain Trust', impact: '+10', reason: 'Appears to be official brand store' });
+      } else {
+        negativeFactors.push('Unknown retailer');
+        scoringFactors.push({ factor: 'Domain Trust', impact: '-5', reason: 'Unfamiliar domain requires additional verification' });
+      }
+      
+      // Add random factors for demo
+      const randomFactors = [
+        { factor: 'Image Analysis', impact: '+8', reason: 'Product images match official specifications', positive: true },
+        { factor: 'Description Quality', impact: '+5', reason: 'Detailed and accurate product description provided', positive: true },
+        { factor: 'Seller History', impact: '-3', reason: 'Limited seller transaction history available', positive: false },
+        { factor: 'Return Policy', impact: '+7', reason: 'Comprehensive return policy indicates seller confidence', positive: true },
+        { factor: 'Customer Reviews', impact: '-8', reason: 'Mixed customer reviews mention quality concerns', positive: false }
+      ];
+      
+      const selectedRandomFactors = randomFactors.sort(() => 0.5 - Math.random()).slice(0, 2);
+      selectedRandomFactors.forEach(factor => {
+        scoringFactors.push(factor);
+        if (factor.positive) {
+          positiveFactors.push(factor.reason.split('.')[0]);
+        } else {
+          negativeFactors.push(factor.reason.split('.')[0]);
+        }
+      });
+
       const demoResults = {
         url: productUrl,
         authenticity: {
-          score: Math.floor(Math.random() * 40) + 60, // 60-100
-          verified: Math.random() > 0.3,
-          productType: ['authentic', 'mass_produced', 'dropshipped'][Math.floor(Math.random() * 3)],
-          flags: []
+          score: score,
+          verified: isVerified,
+          productType: productType,
+          flags: [],
+          explanation: {
+            summary: score >= 80 ? 'This product shows strong indicators of authenticity' :
+                    score >= 70 ? 'This product has moderate authenticity confidence' :
+                    score >= 60 ? 'This product has some authenticity concerns' :
+                    'This product has significant authenticity red flags',
+            positiveFactors: positiveFactors,
+            negativeFactors: negativeFactors,
+            scoringBreakdown: scoringFactors,
+            recommendation: score >= 80 ? 'Safe to purchase - high confidence in authenticity' :
+                           score >= 70 ? 'Proceed with caution - verify seller details' :
+                           score >= 60 ? 'High risk - recommend additional verification' :
+                           'Not recommended - significant counterfeit risk'
+          }
         },
         product: {
           name: 'iPhone 15 Pro',
           brand: 'Apple',
           price: '$999.99',
-          store: new URL(productUrl).hostname.replace('www.', ''),
+          store: domain,
           category: 'Electronics'
         },
         analysis: {
-          storeReputation: Math.floor(Math.random() * 30) + 70,
-          priceComparison: Math.random() > 0.5 ? 'competitive' : 'below_market',
-          riskLevel: Math.random() > 0.7 ? 'low' : 'medium'
+          storeReputation: storeReputation,
+          priceComparison: priceCheck,
+          riskLevel: score >= 80 ? 'low' : score >= 60 ? 'medium' : 'high'
         }
       };
       
@@ -89,13 +178,97 @@ export function SimpleApp() {
                    randomQr.includes('NIKE') ? 'Nike' :
                    randomQr.includes('SAMSUNG') ? 'Samsung' : 'Sony';
       
+      const qrScore = Math.floor(Math.random() * 40) + 60; // 60-100
+      const serialMatch = Math.random() > 0.25;
+      const officialDb = Math.random() > 0.2;
+      const hologramValid = Math.random() > 0.25;
+      const serialVerified = Math.random() > 0.3;
+      
+      // Generate QR scoring explanation
+      const qrScoringFactors = [];
+      const qrPositiveFactors = [];
+      const qrNegativeFactors = [];
+      
+      // QR Code validation
+      if (randomQr.includes('QR') && randomQr.length > 10) {
+        qrPositiveFactors.push('Valid QR code format detected');
+        qrScoringFactors.push({ factor: 'QR Code Format', impact: '+10', reason: 'QR code follows standard manufacturer encoding' });
+      } else {
+        qrNegativeFactors.push('Invalid QR code format');
+        qrScoringFactors.push({ factor: 'QR Code Format', impact: '-15', reason: 'QR code does not match expected format standards' });
+      }
+      
+      // Serial number verification
+      if (serialMatch) {
+        qrPositiveFactors.push('Serial number verified against database');
+        qrScoringFactors.push({ factor: 'Serial Verification', impact: '+25', reason: 'Product serial number found in official manufacturer database' });
+      } else {
+        qrNegativeFactors.push('Serial number not found in database');
+        qrScoringFactors.push({ factor: 'Serial Verification', impact: '-20', reason: 'Serial number could not be verified - possible counterfeit' });
+      }
+      
+      // Official database check
+      if (officialDb) {
+        qrPositiveFactors.push('Product found in official database');
+        qrScoringFactors.push({ factor: 'Database Verification', impact: '+20', reason: 'Product registered in manufacturer\'s official database' });
+      } else {
+        qrNegativeFactors.push('Product not in official database');
+        qrScoringFactors.push({ factor: 'Database Verification', impact: '-25', reason: 'No record found in official product databases' });
+      }
+      
+      // Hologram verification
+      if (hologramValid) {
+        qrPositiveFactors.push('Security hologram validated');
+        qrScoringFactors.push({ factor: 'Hologram Check', impact: '+15', reason: 'Security hologram matches authentic product specifications' });
+      } else {
+        qrNegativeFactors.push('Invalid or missing security hologram');
+        qrScoringFactors.push({ factor: 'Hologram Check', impact: '-15', reason: 'Security hologram absent or does not match authentic standards' });
+      }
+      
+      // Brand-specific checks
+      if (brand === 'Apple') {
+        if (Math.random() > 0.3) {
+          qrPositiveFactors.push('Apple verification signature valid');
+          qrScoringFactors.push({ factor: 'Brand Authentication', impact: '+15', reason: 'Apple\'s proprietary authentication signature verified' });
+        } else {
+          qrNegativeFactors.push('Apple verification signature invalid');
+          qrScoringFactors.push({ factor: 'Brand Authentication', impact: '-20', reason: 'Apple\'s authentication signature missing or invalid' });
+        }
+      }
+      
+      // Manufacturing date check
+      const manufactureDate = '2024-01-15';
+      const currentDate = new Date();
+      const prodDate = new Date(manufactureDate);
+      const daysDiff = Math.floor((currentDate - prodDate) / (1000 * 60 * 60 * 24));
+      
+      if (daysDiff < 365 && daysDiff > 0) {
+        qrPositiveFactors.push('Recent manufacturing date confirmed');
+        qrScoringFactors.push({ factor: 'Manufacturing Date', impact: '+8', reason: 'Manufacturing date is recent and realistic' });
+      } else if (daysDiff > 365) {
+        qrScoringFactors.push({ factor: 'Manufacturing Date', impact: '+0', reason: 'Older product - manufacturing date checks out' });
+      }
+
       const demoQrResult = {
         qrCode: randomQr,
         authenticity: {
-          score: Math.floor(Math.random() * 40) + 60, // 60-100
+          score: qrScore,
           verified: Math.random() > 0.2,
-          authenticityCheck: Math.random() > 0.3 ? 'genuine' : 'suspicious',
-          serialMatch: Math.random() > 0.25
+          authenticityCheck: qrScore >= 70 ? 'genuine' : 'suspicious',
+          serialMatch: serialMatch,
+          explanation: {
+            summary: qrScore >= 80 ? 'QR code verification shows strong authenticity indicators' :
+                    qrScore >= 70 ? 'QR code verification shows moderate authenticity confidence' :
+                    qrScore >= 60 ? 'QR code verification raises some authenticity concerns' :
+                    'QR code verification indicates high counterfeit risk',
+            positiveFactors: qrPositiveFactors,
+            negativeFactors: qrNegativeFactors,
+            scoringBreakdown: qrScoringFactors,
+            recommendation: qrScore >= 80 ? 'Authentic product confirmed - safe to purchase' :
+                           qrScore >= 70 ? 'Likely authentic - verify warranty and purchase from trusted source' :
+                           qrScore >= 60 ? 'Authenticity questionable - seek additional verification' :
+                           'High counterfeit risk - avoid purchase'
+          }
         },
         product: {
           name: brand === 'Apple' ? 'iPhone 15 Pro' :
@@ -103,14 +276,14 @@ export function SimpleApp() {
                 brand === 'Samsung' ? 'Galaxy S24' : 'WH-1000XM5',
           brand: brand,
           model: brand === 'Apple' ? 'A2848' : brand === 'Nike' ? 'DZ5485-612' : 'SM-S921B',
-          manufactureDate: '2024-01-15',
+          manufactureDate: manufactureDate,
           warrantyStatus: Math.random() > 0.3 ? 'valid' : 'expired'
         },
         verification: {
-          officialDatabase: Math.random() > 0.2,
-          hologramCheck: Math.random() > 0.25,
-          serialVerified: Math.random() > 0.3,
-          counterfeitRisk: Math.random() > 0.7 ? 'low' : Math.random() > 0.4 ? 'medium' : 'high'
+          officialDatabase: officialDb,
+          hologramCheck: hologramValid,
+          serialVerified: serialVerified,
+          counterfeitRisk: qrScore >= 80 ? 'low' : qrScore >= 60 ? 'medium' : 'high'
         }
       };
       
@@ -272,6 +445,68 @@ export function SimpleApp() {
                       </div>
                     </div>
 
+                    {/* Detailed Explanation */}
+                    <div className="mt-6 border-t pt-4">
+                      <h4 className="font-medium text-gray-900 mb-3">🔍 Why This Score?</h4>
+                      <p className="text-sm text-gray-700 mb-4">{scanResult.authenticity.explanation?.summary}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        {/* Positive Factors */}
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <h5 className="font-medium text-green-800 mb-2">✅ Positive Indicators</h5>
+                          <ul className="text-sm text-green-700 space-y-1">
+                            {scanResult.authenticity.explanation?.positiveFactors.map((factor, index) => (
+                              <li key={index}>• {factor}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        {/* Negative Factors */}
+                        <div className="bg-red-50 p-3 rounded-lg">
+                          <h5 className="font-medium text-red-800 mb-2">⚠️ Concerns</h5>
+                          <ul className="text-sm text-red-700 space-y-1">
+                            {scanResult.authenticity.explanation?.negativeFactors.length > 0 ? (
+                              scanResult.authenticity.explanation.negativeFactors.map((factor, index) => (
+                                <li key={index}>• {factor}</li>
+                              ))
+                            ) : (
+                              <li>• No significant concerns detected</li>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      {/* Scoring Breakdown */}
+                      <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                        <h5 className="font-medium text-gray-800 mb-2">📊 Scoring Breakdown</h5>
+                        <div className="space-y-2">
+                          {scanResult.authenticity.explanation?.scoringBreakdown.map((item, index) => (
+                            <div key={index} className="flex justify-between items-center text-sm">
+                              <span className="text-gray-700">{item.factor}</span>
+                              <div className="flex items-center">
+                                <span className={`font-medium mr-2 ${
+                                  item.impact.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                  {item.impact}
+                                </span>
+                                <span className="text-xs text-gray-500" title={item.reason}>ℹ️</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* Recommendation */}
+                      <div className={`p-3 rounded-lg ${
+                        scanResult.authenticity.score >= 80 ? 'bg-green-100 text-green-800' :
+                        scanResult.authenticity.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        <h5 className="font-medium mb-1">💡 Recommendation</h5>
+                        <p className="text-sm">{scanResult.authenticity.explanation?.recommendation}</p>
+                      </div>
+                    </div>
+
                     <button
                       onClick={() => setScanResult(null)}
                       className="mt-4 text-sm text-blue-600 hover:text-blue-800"
@@ -324,6 +559,70 @@ export function SimpleApp() {
                       <p className="text-xs text-blue-600 mt-1">
                         This QR code was verified against official manufacturer databases
                       </p>
+                    </div>
+
+                    {/* QR Detailed Explanation */}
+                    <div className="mt-6 border-t pt-4">
+                      <h4 className="font-medium text-gray-900 mb-3">🔍 QR Code Analysis Explanation</h4>
+                      <p className="text-sm text-gray-700 mb-4">{qrResult.authenticity.explanation?.summary}</p>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        {/* Positive Factors */}
+                        <div className="bg-green-50 p-3 rounded-lg">
+                          <h5 className="font-medium text-green-800 mb-2">✅ Verification Passed</h5>
+                          <ul className="text-sm text-green-700 space-y-1">
+                            {qrResult.authenticity.explanation?.positiveFactors.map((factor, index) => (
+                              <li key={index}>• {factor}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        
+                        {/* Negative Factors */}
+                        <div className="bg-red-50 p-3 rounded-lg">
+                          <h5 className="font-medium text-red-800 mb-2">⚠️ Verification Failed</h5>
+                          <ul className="text-sm text-red-700 space-y-1">
+                            {qrResult.authenticity.explanation?.negativeFactors.length > 0 ? (
+                              qrResult.authenticity.explanation.negativeFactors.map((factor, index) => (
+                                <li key={index}>• {factor}</li>
+                              ))
+                            ) : (
+                              <li>• All verification checks passed</li>
+                            )}
+                          </ul>
+                        </div>
+                      </div>
+                      
+                      {/* QR Scoring Breakdown */}
+                      <div className="bg-gray-50 p-3 rounded-lg mb-4">
+                        <h5 className="font-medium text-gray-800 mb-2">📊 Verification Breakdown</h5>
+                        <div className="space-y-2">
+                          {qrResult.authenticity.explanation?.scoringBreakdown.map((item, index) => (
+                            <div key={index} className="text-sm">
+                              <div className="flex justify-between items-center mb-1">
+                                <span className="text-gray-700 font-medium">{item.factor}</span>
+                                <span className={`font-bold ${
+                                  item.impact.startsWith('+') ? 'text-green-600' : 'text-red-600'
+                                }`}>
+                                  {item.impact}
+                                </span>
+                              </div>
+                              <p className="text-xs text-gray-600 pl-2 border-l-2 border-gray-300">
+                                {item.reason}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      
+                      {/* QR Recommendation */}
+                      <div className={`p-3 rounded-lg ${
+                        qrResult.authenticity.score >= 80 ? 'bg-green-100 text-green-800' :
+                        qrResult.authenticity.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                        'bg-red-100 text-red-800'
+                      }`}>
+                        <h5 className="font-medium mb-1">💡 Final Recommendation</h5>
+                        <p className="text-sm">{qrResult.authenticity.explanation?.recommendation}</p>
+                      </div>
                     </div>
 
                     <button
