@@ -105,7 +105,7 @@ function getEnvArray(key: string, defaultValue: string[] = []): string[] {
 // Environment configuration
 export const config: EnvironmentConfig = {
   // API Configuration
-  apiBaseUrl: getEnvVar('VITE_API_BASE_URL', 'http://localhost:3000'),
+  apiBaseUrl: getEnvVar('VITE_API_BASE_URL', 'https://shopscanner-production.up.railway.app'),
   apiTimeout: getEnvNumber('VITE_API_TIMEOUT', 30000),
   
   // Authentication
