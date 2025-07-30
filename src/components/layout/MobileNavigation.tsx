@@ -6,7 +6,16 @@ import { cn } from '../../lib/utils';
 
 export function MobileNavigation() {
   const location = useLocation();
-  const { isAuthenticated } = useAuth();
+  
+  // Safely get auth context with fallback
+  let isAuthenticated = false;
+  try {
+    const auth = useAuth();
+    isAuthenticated = auth.isAuthenticated;
+  } catch (error) {
+    // AuthProvider not ready yet, use defaults
+    isAuthenticated = false;
+  }
 
   // Don't show on auth pages
   if (location.pathname === '/login' || location.pathname === '/register') {

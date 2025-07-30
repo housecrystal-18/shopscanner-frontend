@@ -16,8 +16,22 @@ import { cn } from '../../lib/utils';
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuth();
   const location = useLocation();
+  
+  // Safely get auth context with fallback
+  let isAuthenticated = false;
+  let user = null;
+  let logout = () => {};
+  
+  try {
+    const auth = useAuth();
+    isAuthenticated = auth.isAuthenticated;
+    user = auth.user;
+    logout = auth.logout;
+  } catch (error) {
+    // AuthProvider not ready yet, use defaults
+    console.warn('AuthProvider not ready, using defaults');
+  }
 
   const navigation = [
     { name: 'Products', href: '/products', icon: ShoppingBag, requiresAuth: false },
