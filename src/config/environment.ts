@@ -137,7 +137,7 @@ export const config: EnvironmentConfig = {
   
   // Development
   debugMode: getEnvBoolean('VITE_DEBUG_MODE', import.meta.env.DEV),
-  mockApi: getEnvBoolean('VITE_MOCK_API', false),
+  mockApi: getEnvBoolean('VITE_MOCK_API', true),
   logLevel: (getEnvVar('VITE_LOG_LEVEL', 'info') as any) || 'info',
   
   // AWS
