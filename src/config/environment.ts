@@ -105,16 +105,16 @@ function getEnvArray(key: string, defaultValue: string[] = []): string[] {
 // Environment configuration
 export const config: EnvironmentConfig = {
   // API Configuration
-  apiBaseUrl: getEnvVar('VITE_API_BASE_URL', 'https://shopscanner-production.up.railway.app'),
-  apiTimeout: getEnvNumber('VITE_API_TIMEOUT', 30000),
+  apiBaseUrl: 'https://shopscanner-production.up.railway.app',
+  apiTimeout: 30000,
   
   // Authentication
   jwtSecret: getEnvVar('VITE_JWT_SECRET'),
   sessionTimeout: getEnvNumber('VITE_SESSION_TIMEOUT', 3600000),
   
   // Stripe
-  stripePublishableKey: getEnvVar('VITE_STRIPE_PUBLISHABLE_KEY', ''),
-  stripeWebhookSecret: getEnvVar('VITE_STRIPE_WEBHOOK_SECRET'),
+  stripePublishableKey: 'pk_test_demo',
+  stripeWebhookSecret: '',
   
   // Analytics
   ga4MeasurementId: getEnvVar('VITE_GA4_MEASUREMENT_ID'),
@@ -136,9 +136,9 @@ export const config: EnvironmentConfig = {
   enableRateLimiting: getEnvBoolean('VITE_ENABLE_RATE_LIMITING', true),
   
   // Development
-  debugMode: getEnvBoolean('VITE_DEBUG_MODE', import.meta.env.DEV),
-  mockApi: getEnvBoolean('VITE_MOCK_API', true),
-  logLevel: (getEnvVar('VITE_LOG_LEVEL', 'info') as any) || 'info',
+  debugMode: false,
+  mockApi: true,
+  logLevel: 'info',
   
   // AWS
   awsRegion: getEnvVar('VITE_AWS_REGION'),
