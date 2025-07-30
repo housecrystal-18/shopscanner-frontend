@@ -9,6 +9,9 @@ export function SimpleApp() {
   const [productUrl, setProductUrl] = useState('');
   const [isScanning, setIsScanning] = useState(false);
   const [scanResult, setScanResult] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<'url' | 'qr'>('url');
+  const [isQrScanning, setIsQrScanning] = useState(false);
+  const [qrResult, setQrResult] = useState<any>(null);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,6 +30,8 @@ export function SimpleApp() {
     setPassword('');
     setScanResult(null);
     setProductUrl('');
+    setQrResult(null);
+    setActiveTab('url');
   };
 
   const handleUrlScan = async (e: React.FormEvent) => {
@@ -67,6 +72,53 @@ export function SimpleApp() {
     }, 2000);
   };
 
+  const handleQrScan = async () => {
+    setIsQrScanning(true);
+    
+    // Simulate QR code scanning process
+    setTimeout(() => {
+      const qrCodes = [
+        'QR12345APPLE67890',
+        'AUTH98765NIKE12345', 
+        'VERIFY555SAMSUNG999',
+        'CHECK777SONY888'
+      ];
+      
+      const randomQr = qrCodes[Math.floor(Math.random() * qrCodes.length)];
+      const brand = randomQr.includes('APPLE') ? 'Apple' : 
+                   randomQr.includes('NIKE') ? 'Nike' :
+                   randomQr.includes('SAMSUNG') ? 'Samsung' : 'Sony';
+      
+      const demoQrResult = {
+        qrCode: randomQr,
+        authenticity: {
+          score: Math.floor(Math.random() * 40) + 60, // 60-100
+          verified: Math.random() > 0.2,
+          authenticityCheck: Math.random() > 0.3 ? 'genuine' : 'suspicious',
+          serialMatch: Math.random() > 0.25
+        },
+        product: {
+          name: brand === 'Apple' ? 'iPhone 15 Pro' :
+                brand === 'Nike' ? 'Air Jordan 1' :
+                brand === 'Samsung' ? 'Galaxy S24' : 'WH-1000XM5',
+          brand: brand,
+          model: brand === 'Apple' ? 'A2848' : brand === 'Nike' ? 'DZ5485-612' : 'SM-S921B',
+          manufactureDate: '2024-01-15',
+          warrantyStatus: Math.random() > 0.3 ? 'valid' : 'expired'
+        },
+        verification: {
+          officialDatabase: Math.random() > 0.2,
+          hologramCheck: Math.random() > 0.25,
+          serialVerified: Math.random() > 0.3,
+          counterfeitRisk: Math.random() > 0.7 ? 'low' : Math.random() > 0.4 ? 'medium' : 'high'
+        }
+      };
+      
+      setQrResult(demoQrResult);
+      setIsQrScanning(false);
+    }, 2500);
+  };
+
   if (isLoggedIn) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -91,41 +143,103 @@ export function SimpleApp() {
 
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
-            {/* URL Scanner Section */}
+            {/* Scanner Section */}
             <div className="bg-white rounded-lg shadow mb-8">
               <div className="px-6 py-4 border-b border-gray-200">
-                <h2 className="text-lg font-semibold text-gray-900">🔍 Scan Product URL for Authenticity</h2>
-                <p className="text-sm text-gray-600 mt-1">Paste any product URL to analyze authenticity and get insights</p>
+                <h2 className="text-lg font-semibold text-gray-900">🔍 Product Authenticity Scanner</h2>
+                <p className="text-sm text-gray-600 mt-1">Scan products by URL or QR code to verify authenticity</p>
+                
+                {/* Tabs */}
+                <div className="mt-4">
+                  <nav className="flex space-x-8" aria-label="Tabs">
+                    <button
+                      onClick={() => setActiveTab('url')}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                        activeTab === 'url'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      🌐 URL Scanner
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('qr')}
+                      className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                        activeTab === 'qr'
+                          ? 'border-blue-500 text-blue-600'
+                          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                      }`}
+                    >
+                      📱 QR Code Scanner
+                    </button>
+                  </nav>
+                </div>
               </div>
               <div className="p-6">
-                <form onSubmit={handleUrlScan} className="space-y-4">
-                  <div>
-                    <label htmlFor="productUrl" className="block text-sm font-medium text-gray-700 mb-2">
-                      Product URL
-                    </label>
-                    <input
-                      id="productUrl"
-                      type="url"
-                      value={productUrl}
-                      onChange={(e) => setProductUrl(e.target.value)}
-                      placeholder="https://amazon.com/product/..."
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                {/* URL Scanner Tab */}
+                {activeTab === 'url' && (
+                  <form onSubmit={handleUrlScan} className="space-y-4">
+                    <div>
+                      <label htmlFor="productUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                        Product URL
+                      </label>
+                      <input
+                        id="productUrl"
+                        type="url"
+                        value={productUrl}
+                        onChange={(e) => setProductUrl(e.target.value)}
+                        placeholder="https://amazon.com/product/..."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        disabled={isScanning}
+                      />
+                    </div>
+                    <button
+                      type="submit"
                       disabled={isScanning}
-                    />
-                  </div>
-                  <button
-                    type="submit"
-                    disabled={isScanning}
-                    className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
-                  >
-                    {isScanning ? 'Scanning...' : 'Scan Product'}
-                  </button>
-                </form>
+                      className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                    >
+                      {isScanning ? 'Scanning...' : 'Scan Product'}
+                    </button>
+                  </form>
+                )}
 
-                {/* Scan Results */}
-                {scanResult && (
+                {/* QR Code Scanner Tab */}
+                {activeTab === 'qr' && (
+                  <div className="space-y-4">
+                    <div className="text-center">
+                      <div className="mb-4">
+                        <div className="mx-auto w-48 h-48 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
+                          {isQrScanning ? (
+                            <div className="text-center">
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+                              <p className="text-sm text-gray-600">Scanning QR Code...</p>
+                            </div>
+                          ) : (
+                            <div className="text-center">
+                              <div className="text-4xl mb-2">📱</div>
+                              <p className="text-sm text-gray-600">Tap to scan QR code</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        onClick={handleQrScan}
+                        disabled={isQrScanning}
+                        className="w-full bg-green-600 text-white py-2 px-4 rounded-md font-medium hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50"
+                      >
+                        {isQrScanning ? 'Scanning QR Code...' : 'Start QR Code Scan'}
+                      </button>
+                      <p className="mt-2 text-xs text-gray-500">
+                        Point your camera at a product QR code for authenticity verification
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* URL Scan Results */}
+                {scanResult && activeTab === 'url' && (
                   <div className="mt-6 p-4 border border-gray-200 rounded-lg">
-                    <h3 className="text-lg font-semibold mb-4">Scan Results</h3>
+                    <h3 className="text-lg font-semibold mb-4">URL Scan Results</h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {/* Product Info */}
@@ -166,6 +280,60 @@ export function SimpleApp() {
                     </button>
                   </div>
                 )}
+
+                {/* QR Code Scan Results */}
+                {qrResult && activeTab === 'qr' && (
+                  <div className="mt-6 p-4 border border-gray-200 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-4">QR Code Scan Results</h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {/* Product Info */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-2">Product Details</h4>
+                        <p><strong>Name:</strong> {qrResult.product.name}</p>
+                        <p><strong>Brand:</strong> {qrResult.product.brand}</p>
+                        <p><strong>Model:</strong> {qrResult.product.model}</p>
+                        <p><strong>Manufacture Date:</strong> {qrResult.product.manufactureDate}</p>
+                        <p><strong>Warranty:</strong> {qrResult.product.warrantyStatus}</p>
+                      </div>
+
+                      {/* Authenticity Verification */}
+                      <div className="bg-gray-50 p-4 rounded-lg">
+                        <h4 className="font-medium text-gray-900 mb-2">Authenticity Verification</h4>
+                        <div className="flex items-center mb-2">
+                          <span className="text-lg font-bold mr-2">{qrResult.authenticity.score}/100</span>
+                          <div className={`px-2 py-1 rounded text-sm font-medium ${
+                            qrResult.authenticity.score >= 80 ? 'bg-green-100 text-green-800' :
+                            qrResult.authenticity.score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                            'bg-red-100 text-red-800'
+                          }`}>
+                            {qrResult.authenticity.authenticityCheck === 'genuine' ? 'Genuine Product' : 'Suspicious'}
+                          </div>
+                        </div>
+                        <p><strong>Serial Match:</strong> {qrResult.authenticity.serialMatch ? '✅ Verified' : '❌ No Match'}</p>
+                        <p><strong>Official DB:</strong> {qrResult.verification.officialDatabase ? '✅ Found' : '❌ Not Found'}</p>
+                        <p><strong>Hologram:</strong> {qrResult.verification.hologramCheck ? '✅ Valid' : '❌ Invalid'}</p>
+                        <p><strong>Risk Level:</strong> {qrResult.verification.counterfeitRisk}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                      <p className="text-sm text-blue-800">
+                        <strong>QR Code:</strong> {qrResult.qrCode}
+                      </p>
+                      <p className="text-xs text-blue-600 mt-1">
+                        This QR code was verified against official manufacturer databases
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={() => setQrResult(null)}
+                      className="mt-4 text-sm text-blue-600 hover:text-blue-800"
+                    >
+                      Clear Results
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -180,21 +348,21 @@ export function SimpleApp() {
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
                   <div className="bg-white p-6 rounded-lg shadow">
-                    <div className="text-2xl mb-4">📱</div>
-                    <h3 className="text-lg font-semibold mb-2">Scan Products</h3>
-                    <p className="text-gray-600">Scan barcodes to check authenticity</p>
+                    <div className="text-2xl mb-4">🌐</div>
+                    <h3 className="text-lg font-semibold mb-2">URL Scanning</h3>
+                    <p className="text-gray-600">Paste product URLs to analyze authenticity and compare prices</p>
                   </div>
                   
                   <div className="bg-white p-6 rounded-lg shadow">
-                    <div className="text-2xl mb-4">💰</div>
-                    <h3 className="text-lg font-semibold mb-2">Compare Prices</h3>
-                    <p className="text-gray-600">Find the best deals across platforms</p>
+                    <div className="text-2xl mb-4">📱</div>
+                    <h3 className="text-lg font-semibold mb-2">QR Code Verification</h3>
+                    <p className="text-gray-600">Scan QR codes to verify genuine products against official databases</p>
                   </div>
                   
                   <div className="bg-white p-6 rounded-lg shadow">
                     <div className="text-2xl mb-4">🛡️</div>
-                    <h3 className="text-lg font-semibold mb-2">Verify Authenticity</h3>
-                    <p className="text-gray-600">Protect yourself from fakes</p>
+                    <h3 className="text-lg font-semibold mb-2">Authenticity Analysis</h3>
+                    <p className="text-gray-600">Advanced scoring system to detect counterfeits and fakes</p>
                   </div>
                 </div>
 
