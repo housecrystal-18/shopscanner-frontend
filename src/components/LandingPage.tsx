@@ -72,13 +72,13 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
             </div>
             <div className="bg-white p-6 rounded-xl shadow-md">
               <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">QR & Barcode Scanner</h3>
-              <p className="text-gray-600">Scan product codes to verify authenticity and compare prices instantly.</p>
+              <h3 className="text-xl font-semibold mb-2">🤖 AI-Powered Scanner</h3>
+              <p className="text-gray-600">Scan product codes to verify authenticity using advanced artificial intelligence.</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-md">
               <TrendingUp className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Real-time Results</h3>
-              <p className="text-gray-600">Get instant authenticity scores and detailed analysis reports.</p>
+              <h3 className="text-xl font-semibold mb-2">Instant AI Analysis</h3>
+              <p className="text-gray-600">Get immediate authenticity scores and detailed AI-generated reports.</p>
             </div>
           </div>
 
@@ -124,11 +124,19 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
           {/* Trust Indicators */}
           <div className="mt-16">
             <p className="text-gray-500 text-sm mb-4">Trusted by thousands of shoppers worldwide</p>
-            <div className="flex justify-center items-center space-x-8 opacity-60">
+            <div className="flex justify-center items-center space-x-8 opacity-60 mb-8">
               <div className="text-2xl">⭐⭐⭐⭐⭐</div>
               <div className="text-sm">4.9/5 Rating</div>
               <div className="text-sm">10,000+ Scans</div>
               <div className="text-sm">500+ Reviews</div>
+            </div>
+            
+            {/* AI Disclaimer */}
+            <div className="mt-8 p-4 bg-yellow-50 border border-yellow-200 rounded-lg max-w-3xl mx-auto">
+              <p className="text-sm text-yellow-800 text-center">
+                <strong>⚠️ Important:</strong> Shop Scanner uses artificial intelligence to analyze products and may not be 100% accurate. 
+                Our AI analysis should be used as a guide only. Always verify authenticity through official manufacturer channels for valuable purchases.
+              </p>
             </div>
           </div>
         </div>
