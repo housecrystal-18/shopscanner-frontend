@@ -102,7 +102,7 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
                 <h3 className="text-xl font-semibold mb-2">Free Trial</h3>
                 <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-gray-500">/month</span></div>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />2 scans per month</li>
+                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />10 scans per month</li>
                   <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Basic authenticity analysis</li>
                   <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Store reputation check</li>
                 </ul>

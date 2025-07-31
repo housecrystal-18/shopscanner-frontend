@@ -200,10 +200,10 @@ export function UserDashboard({ user, onBack }: UserDashboardProps) {
               <div>
                 <div className="flex justify-between text-sm mb-1">
                   <span>Scans Used</span>
-                  <span>15 / {user?.plan === 'free' ? '2' : '∞'}</span>
+                  <span>7 / {user?.plan === 'free' ? '10' : '∞'}</span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: user?.plan === 'free' ? '100%' : '15%' }}></div>
+                  <div className="bg-blue-600 h-2 rounded-full" style={{ width: user?.plan === 'free' ? '70%' : '15%' }}></div>
                 </div>
               </div>
               

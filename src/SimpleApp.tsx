@@ -4,6 +4,8 @@ import { LandingPage } from './components/LandingPage';
 import { UserDashboard } from './components/UserDashboard';
 import { RegistrationForm } from './components/RegistrationForm';
 import { SocialShareCompact } from './components/SocialShare';
+import { OnboardingTutorial } from './components/OnboardingTutorial';
+import { PriceHistory } from './components/PriceHistory';
 
 export function SimpleApp() {
   const [email, setEmail] = useState('');
@@ -17,6 +19,8 @@ export function SimpleApp() {
   const [isQrScanning, setIsQrScanning] = useState(false);
   const [qrResult, setQrResult] = useState<any>(null);
   const [showView, setShowView] = useState<'landing' | 'app' | 'login' | 'register' | 'pricing' | 'dashboard'>('landing');
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -24,6 +28,10 @@ export function SimpleApp() {
       setIsLoggedIn(true);
       setUser({ name: 'Demo User', email: email, type: 'consumer' });
       setShowView('app');
+      // Show onboarding for first-time users
+      if (!hasSeenOnboarding) {
+        setShowOnboarding(true);
+      }
     } else {
       alert('Invalid credentials. Use: demo@shopscanner.com / demo123');
     }
@@ -52,6 +60,10 @@ export function SimpleApp() {
       plan: userData.selectedPlan 
     });
     setShowView('app');
+    // Show onboarding for new registrations
+    if (!hasSeenOnboarding) {
+      setShowOnboarding(true);
+    }
   };
 
   const handleUrlScan = async (e: React.FormEvent) => {
@@ -427,6 +439,13 @@ export function SimpleApp() {
                   description="🛡️ Just discovered this amazing tool that helps detect fake products using AI. Check it out to protect yourself from counterfeits when shopping online!"
                 />
                 <button 
+                  onClick={() => setShowOnboarding(true)}
+                  className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
+                  title="Show Tutorial"
+                >
+                  ?
+                </button>
+                <button 
                   onClick={() => setShowView('dashboard')}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
                 >
@@ -658,6 +677,14 @@ export function SimpleApp() {
                     >
                       Clear Results
                     </button>
+
+                    {/* Price History Section */}
+                    <div className="mt-6">
+                      <PriceHistory 
+                        productName={scanResult.product.name}
+                        currentPrice={parseFloat(scanResult.product.price.replace('$', ''))}
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -835,6 +862,20 @@ export function SimpleApp() {
             </div>
           </div>
         </main>
+        
+        {/* Onboarding Tutorial */}
+        {showOnboarding && (
+          <OnboardingTutorial
+            onComplete={() => {
+              setShowOnboarding(false);
+              setHasSeenOnboarding(true);
+            }}
+            onSkip={() => {
+              setShowOnboarding(false);
+              setHasSeenOnboarding(true);
+            }}
+          />
+        )}
       </div>
     );
   }
