@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './index.css';
+import { LandingPage } from './components/LandingPage';
 
 export function SimpleApp() {
   const [email, setEmail] = useState('');
@@ -12,12 +13,14 @@ export function SimpleApp() {
   const [activeTab, setActiveTab] = useState<'url' | 'qr'>('url');
   const [isQrScanning, setIsQrScanning] = useState(false);
   const [qrResult, setQrResult] = useState<any>(null);
+  const [showView, setShowView] = useState<'landing' | 'app' | 'login' | 'register' | 'pricing'>('landing');
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     if (email === 'demo@shopscanner.com' && password === 'demo123') {
       setIsLoggedIn(true);
       setUser({ name: 'Demo User', email: email, type: 'consumer' });
+      setShowView('app');
     } else {
       alert('Invalid credentials. Use: demo@shopscanner.com / demo123');
     }
@@ -32,6 +35,7 @@ export function SimpleApp() {
     setProductUrl('');
     setQrResult(null);
     setActiveTab('url');
+    setShowView('landing');
   };
 
   const handleUrlScan = async (e: React.FormEvent) => {
@@ -764,6 +768,17 @@ export function SimpleApp() {
           </div>
         </main>
       </div>
+    );
+  }
+
+  // Show landing page for non-authenticated users first
+  if (!isLoggedIn && showView === 'landing') {
+    return (
+      <LandingPage
+        onLogin={() => setShowView('login')}
+        onRegister={() => setShowView('register')}
+        onViewPricing={() => setShowView('pricing')}
+      />
     );
   }
 
