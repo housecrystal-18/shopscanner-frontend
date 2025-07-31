@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import './index.css';
 import { LandingPage } from './components/LandingPage';
 import { UserDashboard } from './components/UserDashboard';
+import { RegistrationForm } from './components/RegistrationForm';
 
 export function SimpleApp() {
   const [email, setEmail] = useState('');
@@ -37,6 +38,19 @@ export function SimpleApp() {
     setQrResult(null);
     setActiveTab('url');
     setShowView('landing');
+  };
+
+  const handleRegister = (userData: any) => {
+    // In a real app, this would make an API call to create the account
+    console.log('Registration data:', userData);
+    setIsLoggedIn(true);
+    setUser({ 
+      name: userData.name, 
+      email: userData.email, 
+      type: userData.accountType,
+      plan: userData.selectedPlan 
+    });
+    setShowView('app');
   };
 
   const handleUrlScan = async (e: React.FormEvent) => {
@@ -817,6 +831,16 @@ export function SimpleApp() {
           </div>
         </main>
       </div>
+    );
+  }
+
+  // Registration form
+  if (!isLoggedIn && showView === 'register') {
+    return (
+      <RegistrationForm
+        onBack={() => setShowView('landing')}
+        onRegister={handleRegister}
+      />
     );
   }
 
