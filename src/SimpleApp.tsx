@@ -3,6 +3,7 @@ import './index.css';
 import { LandingPage } from './components/LandingPage';
 import { UserDashboard } from './components/UserDashboard';
 import { RegistrationForm } from './components/RegistrationForm';
+import { SocialShareCompact } from './components/SocialShare';
 
 export function SimpleApp() {
   const [email, setEmail] = useState('');
@@ -421,6 +422,10 @@ export function SimpleApp() {
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700">Welcome, {user.name}!</span>
+                <SocialShareCompact 
+                  title="I'm using Shop Scanner to verify product authenticity!"
+                  description="🛡️ Just discovered this amazing tool that helps detect fake products using AI. Check it out to protect yourself from counterfeits when shopping online!"
+                />
                 <button 
                   onClick={() => setShowView('dashboard')}
                   className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"

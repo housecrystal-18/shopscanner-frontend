@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScanLine, Check, Shield, TrendingUp } from 'lucide-react';
+import { SocialShare, SocialShareCompact } from './SocialShare';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -19,6 +20,7 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
               <span className="text-xl font-bold text-gray-900">Shop Scanner</span>
             </div>
             <div className="flex items-center space-x-4">
+              <SocialShareCompact />
               <button
                 onClick={onLogin}
                 className="px-4 py-2 text-sm text-gray-700 hover:text-blue-600"
@@ -48,7 +50,7 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
             analyze store reputation, and get real-time price comparisons.
           </p>
           
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
             <button
               onClick={onRegister}
               className="px-8 py-4 bg-blue-600 text-white text-lg font-semibold rounded-lg hover:bg-blue-700 transform hover:scale-105 transition-all"
@@ -61,6 +63,16 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
             >
               View Pricing
             </button>
+          </div>
+
+          {/* Social Sharing Section */}
+          <div className="mb-12 text-center">
+            <p className="text-gray-600 mb-4">Help others avoid counterfeit products</p>
+            <SocialShare 
+              title="Shop Scanner - AI-Powered Product Authenticity Verification"
+              description="🛡️ Protect yourself from fake products! Scan URLs & QR codes to verify authenticity with advanced AI analysis. Join thousands of smart shoppers staying safe online. #ShopScanner #AntiCounterfeit"
+              className="inline-block"
+            />
           </div>
 
           {/* Features */}
