@@ -85,7 +85,7 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
           {/* Pricing Preview */}
           <div className="mt-16 bg-white rounded-2xl shadow-xl p-8">
             <h2 className="text-3xl font-bold mb-8">Simple Pricing</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               <div className="border-2 border-gray-200 rounded-xl p-6">
                 <h3 className="text-xl font-semibold mb-2">Free Trial</h3>
                 <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-gray-500">/month</span></div>
@@ -103,8 +103,8 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
               </div>
               <div className="border-2 border-blue-500 rounded-xl p-6 relative">
                 <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-4 py-1 rounded-full text-sm">Popular</div>
-                <h3 className="text-xl font-semibold mb-2">Premium</h3>
-                <div className="text-3xl font-bold mb-4">$9.99<span className="text-lg text-gray-500">/month</span></div>
+                <h3 className="text-xl font-semibold mb-2">Monthly</h3>
+                <div className="text-3xl font-bold mb-4">$10.00<span className="text-lg text-gray-500">/month</span></div>
                 <ul className="text-left space-y-2 mb-6">
                   <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Unlimited scans</li>
                   <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Advanced AI analysis</li>
@@ -115,7 +115,26 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
                   onClick={onRegister}
                   className="w-full py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                 >
-                  Get Premium
+                  Get Monthly Plan
+                </button>
+              </div>
+              <div className="border-2 border-green-500 rounded-xl p-6 relative">
+                <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-1 rounded-full text-sm">Save 10%</div>
+                <h3 className="text-xl font-semibold mb-2">Annual</h3>
+                <div className="text-3xl font-bold mb-1">$9.00<span className="text-lg text-gray-500">/month</span></div>
+                <div className="text-sm text-gray-500 mb-4">$108.00 billed annually</div>
+                <ul className="text-left space-y-2 mb-6">
+                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Unlimited scans</li>
+                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Advanced AI analysis</li>
+                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Price comparison</li>
+                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Priority support</li>
+                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />2 months free</li>
+                </ul>
+                <button 
+                  onClick={onRegister}
+                  className="w-full py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+                >
+                  Get Annual Plan
                 </button>
               </div>
             </div>
