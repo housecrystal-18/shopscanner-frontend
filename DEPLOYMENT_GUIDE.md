@@ -1,8 +1,8 @@
-# Shop Scanner Production Deployment Guide
+# Shop Scan Pro Production Deployment Guide
 
 ## 🚀 Consumer Launch Checklist
 
-This guide walks you through launching Shop Scanner for real consumers.
+This guide walks you through launching Shop Scan Pro for real consumers.
 
 ### Phase 1: Critical Launch Requirements (MUST DO)
 

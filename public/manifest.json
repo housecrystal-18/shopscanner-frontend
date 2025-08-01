@@ -1,6 +1,6 @@
 {
-  "name": "Shop Scanner - Product Authenticity & Price Comparison",
-  "short_name": "Shop Scanner",
+  "name": "Shop Scan Pro - Product Authenticity & Price Comparison",
+  "short_name": "Shop Scan Pro",
   "description": "Scan barcodes to verify product authenticity and compare prices across stores. Save money and avoid counterfeit products.",
   "start_url": "/",
   "display": "standalone",

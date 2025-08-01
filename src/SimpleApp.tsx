@@ -454,12 +454,12 @@ export function SimpleApp() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between h-16">
               <div className="flex items-center">
-                <h1 className="text-xl font-bold text-gray-900">🛍️ Shop Scanner</h1>
+                <h1 className="text-xl font-bold text-gray-900">🛍️ Shop Scan Pro</h1>
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-gray-700">Welcome, {user.name}!</span>
                 <SocialShareCompact 
-                  title="I'm using Shop Scanner to verify product authenticity!"
+                  title="I'm using Shop Scan Pro to verify product authenticity!"
                   description="🛡️ Just discovered this amazing tool that helps detect fake products using AI. Check it out to protect yourself from counterfeits when shopping online!"
                 />
                 <button 
@@ -852,7 +852,7 @@ export function SimpleApp() {
             <div className="border-4 border-dashed border-gray-200 rounded-lg p-8">
               <div className="text-center">
                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                  🎉 Shop Scanner is Working!
+                  🎉 Shop Scan Pro is Working!
                 </h2>
                 <p className="text-lg text-gray-600 mb-8">
                   Your app is successfully deployed and running.
@@ -937,7 +937,7 @@ export function SimpleApp() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="text-center">
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">🛍️ Shop Scanner</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-2">🛍️ Shop Scan Pro</h1>
           <h2 className="text-xl text-gray-600">Product Authenticity & Price Comparison</h2>
         </div>
       </div>

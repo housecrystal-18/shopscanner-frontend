@@ -10,7 +10,7 @@ interface SocialShareProps {
 
 export function SocialShare({ 
   url = 'https://shopscannerfrontendv2.vercel.app',
-  title = 'Shop Scanner - Verify Product Authenticity Before You Buy',
+  title = 'Shop Scan Pro - Verify Product Authenticity Before You Buy',
   description = 'Scan product URLs and QR codes to detect fake products, analyze store reputation, and get real-time price comparisons. Protect yourself from counterfeits with AI-powered authenticity verification.',
   className = ''
 }: SocialShareProps) {
@@ -34,7 +34,7 @@ export function SocialShare({
       name: 'Twitter',
       icon: Twitter,
       color: 'bg-sky-500 hover:bg-sky-600',
-      shareUrl: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.title)}&url=${encodeURIComponent(shareData.url)}&hashtags=ShopScanner,AntiCounterfeit,OnlineShopping`
+      shareUrl: `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareData.title)}&url=${encodeURIComponent(shareData.url)}&hashtags=ShopScanPro,AntiCounterfeit,OnlineShopping`
     },
     {
       name: 'LinkedIn',
@@ -95,7 +95,7 @@ export function SocialShare({
       {showShareMenu && (
         <div className="absolute top-full left-0 mt-2 w-72 bg-white rounded-lg shadow-xl border z-50">
           <div className="p-4">
-            <h3 className="font-semibold text-gray-900 mb-3">Share Shop Scanner</h3>
+            <h3 className="font-semibold text-gray-900 mb-3">Share Shop Scan Pro</h3>
             
             {/* Social Media Platforms */}
             <div className="grid grid-cols-2 gap-2 mb-4">
@@ -167,7 +167,7 @@ export function SocialShareCompact({ url, title, description, className = '' }: 
 
   const handleShare = async () => {
     const shareData = {
-      title: title || 'Shop Scanner - Verify Product Authenticity Before You Buy',
+      title: title || 'Shop Scan Pro - Verify Product Authenticity Before You Buy',
       text: description || 'Protect yourself from counterfeits with AI-powered authenticity verification.',
       url: url || 'https://shopscannerfrontendv2.vercel.app',
     };
@@ -198,7 +198,7 @@ export function SocialShareCompact({ url, title, description, className = '' }: 
       <button
         onClick={handleShare}
         className="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-        title="Share Shop Scanner"
+        title="Share Shop Scan Pro"
       >
         <Share2 className="w-5 h-5" />
       </button>

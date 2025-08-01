@@ -17,7 +17,7 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
           <div className="flex justify-between h-16">
             <div className="flex items-center">
               <ScanLine className="h-8 w-8 text-blue-600 mr-2" />
-              <span className="text-xl font-bold text-gray-900">Shop Scanner</span>
+              <span className="text-xl font-bold text-gray-900">Shop Scan Pro</span>
             </div>
             <div className="flex items-center space-x-4">
               <SocialShareCompact />
@@ -69,8 +69,8 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
           <div className="mb-12 text-center">
             <p className="text-gray-600 mb-4">Help others avoid counterfeit products</p>
             <SocialShare 
-              title="Shop Scanner - AI-Powered Product Authenticity Verification"
-              description="🛡️ Protect yourself from fake products! Scan URLs & QR codes to verify authenticity with advanced AI analysis. Join thousands of smart shoppers staying safe online. #ShopScanner #AntiCounterfeit"
+              title="Shop Scan Pro - AI-Powered Product Authenticity Verification"
+              description="🛡️ Protect yourself from fake products! Scan URLs & QR codes to verify authenticity with advanced AI analysis. Join thousands of smart shoppers staying safe online. #ShopScanPro #AntiCounterfeit"
               className="inline-block"
             />
           </div>

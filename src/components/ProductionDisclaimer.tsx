@@ -9,7 +9,7 @@ export function ProductionDisclaimer() {
         <div>
           <h4 className="font-medium text-blue-900 mb-1">Demo Data Notice</h4>
           <p className="text-sm text-blue-800 leading-relaxed">
-            Shop Scanner is currently using demonstration data to showcase functionality. 
+            Shop Scan Pro is currently using demonstration data to showcase functionality. 
             Authenticity scores and price comparisons are simulated for illustration purposes. 
             Real product database integration is coming soon. All payment processing is fully functional.
           </p>

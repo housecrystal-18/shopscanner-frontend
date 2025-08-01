@@ -24,7 +24,7 @@ export function OnboardingTutorial({ onComplete, onSkip }: OnboardingTutorialPro
   const tutorialSteps: TutorialStep[] = [
     {
       id: 'welcome',
-      title: 'Welcome to Shop Scanner!',
+      title: 'Welcome to Shop Scan Pro!',
       description: 'Protect yourself from counterfeit products with AI-powered authenticity verification. Let\'s show you how it works.',
       icon: Shield,
     },
