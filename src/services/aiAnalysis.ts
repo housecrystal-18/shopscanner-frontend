@@ -1,4 +1,6 @@
-// AI Analysis Service - Connects to real Google Cloud Vision API
+// AI Analysis Service - Connects to real Google Cloud Vision API and Web Scraping
+import { productScraperService, type ScrapedProduct } from './productScraper';
+
 export interface AIAnalysisRequest {
   image?: string; // Base64 encoded image
   url?: string;   // Product URL
@@ -49,18 +51,44 @@ class AIAnalysisService {
 
   async analyzeProduct(request: AIAnalysisRequest): Promise<AIAnalysisResult> {
     try {
-      // In development, use mock data unless AI is specifically enabled
-      if (!this.isProduction && !import.meta.env.VITE_ENABLE_AI) {
-        return this.getMockAnalysis(request);
+      let scrapedData: ScrapedProduct | null = null;
+      
+      // First, try to scrape real product data if URL provided
+      if (request.url) {
+        console.log('Attempting to scrape product data...');
+        
+        // Check cache first
+        scrapedData = productScraperService.getCachedProduct(request.url);
+        
+        if (!scrapedData) {
+          const scrapeResult = await productScraperService.scrapeProduct(request.url);
+          if (scrapeResult.success && scrapeResult.product) {
+            scrapedData = scrapeResult.product;
+            productScraperService.setCachedProduct(request.url, scrapedData);
+            console.log('Successfully scraped product data:', scrapedData.name);
+          } else {
+            console.warn('Scraping failed:', scrapeResult.error);
+          }
+        } else {
+          console.log('Using cached product data:', scrapedData.name);
+        }
       }
 
-      // Make API call to our backend
+      // In development, use mock data unless AI is specifically enabled
+      if (!this.isProduction && !import.meta.env.VITE_ENABLE_AI) {
+        return this.getMockAnalysis(request, scrapedData);
+      }
+
+      // Make API call to our backend for AI analysis
       const response = await fetch('/api/analyze-product', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(request),
+        body: JSON.stringify({
+          ...request,
+          scrapedData // Include scraped data for enhanced analysis
+        }),
       });
 
       if (!response.ok) {
@@ -68,7 +96,7 @@ class AIAnalysisService {
       }
 
       const result = await response.json();
-      return this.processAnalysisResult(result);
+      return this.processAnalysisResult(result, scrapedData);
 
     } catch (error) {
       console.error('AI Analysis failed:', error);
@@ -82,7 +110,7 @@ class AIAnalysisService {
     }
   }
 
-  private processAnalysisResult(rawResult: any): AIAnalysisResult {
+  private processAnalysisResult(rawResult: any, scrapedData?: ScrapedProduct | null): AIAnalysisResult {
     // Ensure all required fields are present with defaults
     return {
       authenticity_score: rawResult.authenticity_score || 50,
@@ -106,13 +134,33 @@ class AIAnalysisService {
     };
   }
 
-  private getMockAnalysis(request: AIAnalysisRequest): AIAnalysisResult {
-    // Enhanced mock data based on URL analysis (from previous implementation)
+  private getMockAnalysis(request: AIAnalysisRequest, scrapedData?: ScrapedProduct | null): AIAnalysisResult {
+    // Use scraped data if available, otherwise fall back to intelligent mock data
     const url = request.url;
-    let mockData = this.getIntelligentMockData(url);
+    let mockData: any;
+    
+    if (scrapedData) {
+      // Convert scraped data to our format
+      mockData = {
+        name: scrapedData.name,
+        brand: scrapedData.brand,
+        price: scrapedData.price,
+        category: scrapedData.category,
+        description: scrapedData.description,
+        images: scrapedData.images,
+        seller: scrapedData.seller,
+        rating: scrapedData.rating,
+        reviewCount: scrapedData.reviewCount,
+        availability: scrapedData.availability
+      };
+      console.log('Using real scraped data for analysis:', mockData.name);
+    } else {
+      mockData = this.getIntelligentMockData(url);
+      console.log('Using intelligent mock data for analysis');
+    }
 
-    // Add some randomization to make it feel more realistic
-    const score = Math.floor(Math.random() * 40) + 60; // 60-100
+    // Calculate authenticity score based on available data
+    let score = this.calculateAuthenticityScore(scrapedData, url);
     const storeReputation = this.calculateStoreReputation(url);
     
     return {
@@ -216,6 +264,58 @@ class AIAnalysisService {
     } catch {
       return 'unknown';
     }
+  }
+
+  private calculateAuthenticityScore(scrapedData?: ScrapedProduct | null, url?: string): number {
+    let score = 50; // Base score
+    
+    if (scrapedData) {
+      // Use real scraped data for scoring
+      console.log('Calculating authenticity score from scraped data');
+      
+      // Store reputation bonus
+      const storeReputation = this.calculateStoreReputation(url);
+      score += (storeReputation - 50) * 0.4; // Weight store reputation 40%
+      
+      // Price analysis
+      if (scrapedData.price && scrapedData.originalPrice) {
+        const currentPrice = parseFloat(scrapedData.price.replace(/[^\d.]/g, ''));
+        const originalPrice = parseFloat(scrapedData.originalPrice.replace(/[^\d.]/g, ''));
+        if (currentPrice < originalPrice * 0.3) {
+          score -= 20; // Very suspicious discount
+        } else if (currentPrice < originalPrice * 0.7) {
+          score -= 5; // Reasonable discount
+        }
+      }
+      
+      // Seller reputation
+      if (scrapedData.sellerRating) {
+        if (scrapedData.sellerRating >= 95) score += 15;
+        else if (scrapedData.sellerRating >= 85) score += 5;
+        else if (scrapedData.sellerRating < 70) score -= 15;
+      }
+      
+      // Review analysis
+      if (scrapedData.rating && scrapedData.reviewCount) {
+        if (scrapedData.rating >= 4.5 && scrapedData.reviewCount > 100) score += 10;
+        else if (scrapedData.rating < 3.0) score -= 15;
+        if (scrapedData.reviewCount < 10) score -= 10;
+      }
+      
+      // Product completeness (high-quality listings are usually more legitimate)
+      if (scrapedData.description && scrapedData.description.length > 100) score += 5;
+      if (scrapedData.images && scrapedData.images.length >= 3) score += 5;
+      if (scrapedData.specifications && Object.keys(scrapedData.specifications).length > 0) score += 5;
+      
+      // Availability check
+      if (scrapedData.availability === 'out_of_stock') score -= 5;
+      
+    } else {
+      // Fallback to URL-based scoring
+      score = Math.floor(Math.random() * 40) + 60; // 60-100
+    }
+    
+    return Math.max(10, Math.min(100, Math.round(score)));
   }
 
   private generateMockRecommendations(score: number): string[] {
