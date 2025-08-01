@@ -1,5 +1,6 @@
 // AI Analysis Service - Connects to real Google Cloud Vision API and Web Scraping
 import { productScraperService, type ScrapedProduct } from './productScraper';
+import { alternativeProductDataService } from './alternativeProductData';
 
 export interface AIAnalysisRequest {
   image?: string; // Base64 encoded image
@@ -68,6 +69,35 @@ class AIAnalysisService {
             console.log('Successfully scraped product data:', scrapedData.name);
           } else {
             console.warn('Scraping failed:', scrapeResult.error);
+            
+            // Try alternative data sources when scraping fails
+            console.log('Attempting alternative product data lookup...');
+            const altResult = await alternativeProductDataService.getProductData({ url: request.url });
+            if (altResult.success && altResult.product) {
+              // Convert to ScrapedProduct format
+              scrapedData = {
+                name: altResult.product.name,
+                brand: altResult.product.brand,
+                price: altResult.product.price,
+                originalPrice: undefined,
+                availability: altResult.product.availability as any,
+                rating: altResult.product.rating,
+                reviewCount: altResult.product.reviewCount,
+                images: altResult.product.images,
+                description: altResult.product.description,
+                seller: 'Amazon',
+                sellerRating: undefined,
+                category: altResult.product.category,
+                features: [],
+                specifications: {},
+                lastUpdated: Date.now(),
+                source: 'amazon',
+                confidence: 0.8 // High confidence for known products
+              } as ScrapedProduct;
+              
+              console.log(`Alternative data source (${altResult.source}) found product:`, scrapedData.name);
+              productScraperService.setCachedProduct(request.url, scrapedData);
+            }
           }
         } else {
           console.log('Using cached product data:', scrapedData.name);
