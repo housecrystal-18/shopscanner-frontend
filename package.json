@@ -12,6 +12,7 @@
     "pre-deploy": "npm run validate-production && npm run build"
   },
   "dependencies": {
+    "@google-cloud/vision": "^4.3.3",
     "@headlessui/react": "^2.2.0",
     "@hookform/resolvers": "^3.10.0",
     "@sentry/browser": "^9.42.1",
@@ -30,6 +31,7 @@
     "react-hook-form": "^7.54.2",
     "react-hot-toast": "^2.5.0",
     "react-router-dom": "^6.28.0",
+    "recharts": "^2.15.4",
     "tailwindcss": "^3.4.17",
     "zod": "^3.24.1",
     "zustand": "^5.0.3"
