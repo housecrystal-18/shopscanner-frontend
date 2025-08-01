@@ -6,6 +6,8 @@ import { RegistrationForm } from './components/RegistrationForm';
 import { SocialShareCompact } from './components/SocialShare';
 import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { PriceHistory } from './components/PriceHistory';
+import { ProductionDisclaimer, DemoModeAlert } from './components/ProductionDisclaimer';
+import { analytics } from './utils/analytics';
 
 export function SimpleApp() {
   const [email, setEmail] = useState('');
@@ -28,6 +30,10 @@ export function SimpleApp() {
       setIsLoggedIn(true);
       setUser({ name: 'Demo User', email: email, type: 'consumer' });
       setShowView('app');
+      
+      // Track login
+      analytics.featureUsed('login', email);
+      
       // Show onboarding for first-time users
       if (!hasSeenOnboarding) {
         setShowOnboarding(true);
@@ -52,6 +58,17 @@ export function SimpleApp() {
   const handleRegister = (userData: any) => {
     // In a real app, this would make an API call to create the account
     console.log('Registration data:', userData);
+    
+    // Track user registration
+    analytics.userSignup('email', userData.selectedPlan);
+    
+    // Track subscription if paid plan
+    if (userData.selectedPlan !== 'free') {
+      const amount = userData.selectedPlan === 'monthly' ? 10.00 : 108.00;
+      analytics.subscriptionStarted(userData.selectedPlan, amount);
+      analytics.paymentSucceeded(amount, userData.selectedPlan, userData.email);
+    }
+    
     setIsLoggedIn(true);
     setUser({ 
       name: userData.name, 
@@ -60,6 +77,7 @@ export function SimpleApp() {
       plan: userData.selectedPlan 
     });
     setShowView('app');
+    
     // Show onboarding for new registrations
     if (!hasSeenOnboarding) {
       setShowOnboarding(true);
@@ -279,6 +297,9 @@ export function SimpleApp() {
       
       setScanResult(demoResults);
       setIsScanning(false);
+      
+      // Track product scan
+      analytics.productScanned('url', score, user?.email);
     }, 2000);
   };
 
@@ -410,6 +431,9 @@ export function SimpleApp() {
       
       setQrResult(demoQrResult);
       setIsQrScanning(false);
+      
+      // Track QR scan
+      analytics.productScanned('qr', qrScore, user?.email);
     }, 2500);
   };
 
@@ -465,6 +489,9 @@ export function SimpleApp() {
         <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
           <div className="px-4 py-6 sm:px-0">
             {/* Scanner Section */}
+            {/* Production Disclaimer */}
+            <ProductionDisclaimer />
+
             <div className="bg-white rounded-lg shadow mb-8">
               <div className="px-6 py-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-900">🔍 Product Authenticity Scanner</h2>
@@ -869,13 +896,18 @@ export function SimpleApp() {
             onComplete={() => {
               setShowOnboarding(false);
               setHasSeenOnboarding(true);
+              analytics.onboardingCompleted(6, 6, user?.email);
             }}
             onSkip={() => {
               setShowOnboarding(false);
               setHasSeenOnboarding(true);
+              analytics.onboardingSkipped(3, 6, user?.email);
             }}
           />
         )}
+        
+        {/* Demo Mode Alert */}
+        <DemoModeAlert />
       </div>
     );
   }
