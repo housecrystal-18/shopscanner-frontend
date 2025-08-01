@@ -490,12 +490,34 @@ export function RegistrationForm({ onBack, onRegister }: RegistrationFormProps) 
           </div>
         </div>
 
-        {/* Terms and Privacy */}
-        <div className="text-center mt-6">
+        {/* Legal Agreement */}
+        <div className="text-center mt-6 max-w-md mx-auto">
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+            <p className="text-xs text-gray-700 leading-relaxed">
+              <strong>Legal Agreement:</strong> By tapping "Sign Up" or "Complete Registration," you acknowledge that you have read, understood, and agree to be bound by our{' '}
+              <a href="/terms" className="text-blue-600 hover:underline font-medium">Terms of Service</a> and{' '}
+              <a href="/privacy" className="text-blue-600 hover:underline font-medium">Privacy Policy</a>.
+            </p>
+            
+            <div className="mt-3 pt-3 border-t border-gray-300">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                <strong>Service Disclaimer:</strong> Shop Scan Pro provides product analysis for informational purposes only. 
+                Results are AI-generated estimates and may not be 100% accurate. You are solely responsible for your 
+                purchasing decisions. We make no warranties regarding product authenticity or pricing accuracy.
+              </p>
+            </div>
+            
+            <div className="mt-3 pt-3 border-t border-gray-300">
+              <p className="text-xs text-gray-600 leading-relaxed">
+                <strong>Limitation of Liability:</strong> By using this service, you agree that Shop Scan Pro, its owners, 
+                employees, and affiliates shall not be liable for any damages, losses, or claims arising from your use 
+                of our service or reliance on product analysis results.
+              </p>
+            </div>
+          </div>
+          
           <p className="text-xs text-gray-500">
-            By creating an account, you agree to our{' '}
-            <a href="#" className="text-blue-600 hover:underline">Terms of Service</a> and{' '}
-            <a href="#" className="text-blue-600 hover:underline">Privacy Policy</a>
+            Your registration constitutes acceptance of these terms and electronic signature of this agreement.
           </p>
         </div>
       </div>

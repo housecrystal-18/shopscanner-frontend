@@ -1004,6 +1004,16 @@ export function SimpleApp() {
                 Password: <code className="bg-gray-100 px-2 py-1 rounded">demo123</code>
               </p>
             </div>
+            
+            {/* Legal Notice */}
+            <div className="mt-6 bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <p className="text-xs text-gray-600 text-center leading-relaxed">
+                By signing in, you agree to our{' '}
+                <a href="/terms" className="text-blue-600 hover:underline">Terms of Service</a> and{' '}
+                <a href="/privacy" className="text-blue-600 hover:underline">Privacy Policy</a>. 
+                Product analysis results are AI-generated estimates for informational purposes only.
+              </p>
+            </div>
           </div>
         </div>
       </div>
