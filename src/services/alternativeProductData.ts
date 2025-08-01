@@ -30,9 +30,11 @@ class AlternativeProductDataService {
   }
 
   async getProductData(request: ProductDataRequest): Promise<ProductDataResult> {
+    console.log('Alternative data service called with URL:', request.url);
     const asin = request.asin || this.extractASIN(request.url);
     
     if (!asin) {
+      console.error('Could not extract ASIN from URL:', request.url);
       return {
         success: false,
         error: 'Could not extract ASIN from URL',
@@ -135,9 +137,12 @@ class AlternativeProductDataService {
   private async tryOpenProductData(asin: string): Promise<ProductDataResult> {
     // Try to find product info from open data sources
     try {
-      // Some open APIs or cached data sources
+      console.log(`Checking known products database for ASIN: ${asin}`);
       const knownProducts = this.getKnownProductByASIN(asin);
+      console.log(`Known products result for ${asin}:`, knownProducts);
+      
       if (knownProducts) {
+        console.log(`Found known product: ${knownProducts.name}`);
         return {
           success: true,
           product: knownProducts,
@@ -148,6 +153,7 @@ class AlternativeProductDataService {
       console.warn('Open data lookup failed:', error);
     }
 
+    console.log(`No known product found for ASIN: ${asin}`);
     return {
       success: false,
       error: 'No open data available',

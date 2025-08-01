@@ -530,6 +530,11 @@ class ProductScraperService {
       entries.slice(0, 500).forEach(([key]) => this.cache.delete(key));
     }
   }
+
+  clearCachedProduct(url: string): void {
+    this.cache.delete(url);
+    console.log(`Cleared cache for URL: ${url}`);
+  }
 }
 
 export const productScraperService = new ProductScraperService();

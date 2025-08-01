@@ -61,7 +61,13 @@ class AIAnalysisService {
         // For development/testing: try alternative data first for known problematic URLs
         if (request.url.includes('B075CYMYK6')) {
           console.log('Detected known problematic ASIN B075CYMYK6 - trying alternative data first');
+          
+          // Clear any cached bad data for this URL
+          productScraperService.clearCachedProduct(request.url);
+          
           const altResult = await alternativeProductDataService.getProductData({ url: request.url });
+          console.log('Alternative data service result:', altResult);
+          
           if (altResult.success && altResult.product) {
             scrapedData = {
               name: altResult.product.name,
@@ -83,8 +89,13 @@ class AIAnalysisService {
               confidence: 0.95 // Very high confidence for direct ASIN match
             } as ScrapedProduct;
             
-            console.log(`Direct alternative data lookup for B075CYMYK6:`, scrapedData.name);
+            console.log(`Direct alternative data lookup for B075CYMYK6 success:`, scrapedData.name);
             productScraperService.setCachedProduct(request.url, scrapedData);
+            
+            // Exit early - don't try scraping
+            console.log('Skipping scraping since we have good alternative data');
+          } else {
+            console.error('Alternative data service failed:', altResult.error);
           }
         }
         
