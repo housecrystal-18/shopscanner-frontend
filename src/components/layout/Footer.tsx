@@ -11,7 +11,7 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <ScanLine className="h-8 w-8 text-primary-400" />
-              <span className="text-xl font-bold text-white">Shop Scanner</span>
+              <span className="text-xl font-bold text-white">Shop Scan Pro</span>
             </div>
             <p className="text-gray-400 text-sm">
               The easiest way to scan, compare, and find the best deals on products. 
@@ -112,7 +112,7 @@ export function Footer() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
             <div className="flex items-center space-x-2">
               <Mail className="h-4 w-4" />
-              <span>support@shopscanner.com</span>
+              <span>support@shopscanpro.com</span>
             </div>
             <div className="flex items-center space-x-2">
               <Phone className="h-4 w-4" />
@@ -128,7 +128,7 @@ export function Footer() {
         {/* Bottom */}
         <div className="mt-8 pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center">
           <p className="text-gray-400 text-sm">
-            © 2025 Shop Scanner. All rights reserved.
+            © 2025 Shop Scan Pro LLC. All rights reserved.
           </p>
           <div className="mt-4 md:mt-0 flex space-x-6 text-sm">
             <a href="#" className="text-gray-400 hover:text-white transition-colors">
