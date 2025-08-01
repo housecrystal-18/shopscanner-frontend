@@ -17,7 +17,7 @@ export function BarcodeScanner({ onBarcodeDetected, onClose, isScanning = true }
   const [torchEnabled, setTorchEnabled] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [lastScannedCode, setLastScannedCode] = useState<string>('');
-  const scanIntervalRef = useRef<number | null>(null);
+  const scanIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const processFrame = useCallback(() => {
     if (!camera.current || !canvasRef.current || !isScanning || isProcessing) {

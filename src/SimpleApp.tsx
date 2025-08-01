@@ -103,11 +103,11 @@ export function SimpleApp() {
 
       // Convert AI result to the format expected by the UI
       const score = analysisResult.authenticity_score;
-      const score = Math.floor(Math.random() * 40) + 60; // 60-100
-      const storeReputation = Math.floor(Math.random() * 30) + 70;
-      const priceCheck = Math.random() > 0.5 ? 'competitive' : 'below_market';
-      const isVerified = Math.random() > 0.3;
-      const productType = ['authentic', 'mass_produced', 'dropshipped'][Math.floor(Math.random() * 3)];
+      const storeReputation = analysisResult.store_reputation || 50;
+      const detectedStore = analysisResult.detected_store || 'unknown';
+      const priceCheck = analysisResult.price_analysis?.below_market ? 'below_market' : 'competitive';
+      const isVerified = score >= 70;
+      const productType = score >= 80 ? 'authentic' : score >= 60 ? 'mass_produced' : 'suspicious';
       
       // Generate scoring explanation
       const scoringFactors = [];
@@ -365,7 +365,12 @@ export function SimpleApp() {
       
       // Track product scan
       analytics.productScanned('url', score, user?.email);
-    }, 2000);
+      
+    } catch (error) {
+      console.error('AI Analysis failed:', error);
+      setIsScanning(false);
+      alert('Analysis failed. Please try again later.');
+    }
   };
 
   const handleQrScan = async () => {
