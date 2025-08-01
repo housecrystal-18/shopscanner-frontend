@@ -9,7 +9,7 @@ interface SocialShareProps {
 }
 
 export function SocialShare({ 
-  url = 'https://shopscannerfrontendv2.vercel.app',
+  url = 'https://shopscanpro.com',
   title = 'Shop Scan Pro - Verify Product Authenticity Before You Buy',
   description = 'Scan product URLs and QR codes to detect fake products, analyze store reputation, and get real-time price comparisons. Protect yourself from counterfeits with AI-powered authenticity verification.',
   className = ''
@@ -169,7 +169,7 @@ export function SocialShareCompact({ url, title, description, className = '' }: 
     const shareData = {
       title: title || 'Shop Scan Pro - Verify Product Authenticity Before You Buy',
       text: description || 'Protect yourself from counterfeits with AI-powered authenticity verification.',
-      url: url || 'https://shopscannerfrontendv2.vercel.app',
+      url: url || 'https://shopscanpro.com',
     };
 
     if (navigator.share) {
