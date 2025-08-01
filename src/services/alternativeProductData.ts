@@ -159,14 +159,14 @@ class AlternativeProductDataService {
     // Database of known products (we can build this over time)
     const knownProducts: { [key: string]: any } = {
       'B075CYMYK6': {
-        name: 'Fire TV Stick (3rd Gen) with Alexa Voice Remote',
-        brand: 'Amazon',
-        price: '$39.99',
-        description: 'Stream more than 1 million movies and TV episodes from Netflix, Prime Video, Disney+, and more.',
-        category: 'Electronics',
+        name: 'Instant Pot Duo Plus 9-in-1 Electric Pressure Cooker, Slow Cooker, Rice Cooker, Steamer, Sauté, Yogurt Maker, Warmer & Sterilizer, Includes App With Over 800 Recipes, Stainless Steel, 3 Quart',
+        brand: 'Instant Pot',
+        price: '$89.99',
+        description: '9-in-1 functionality: Pressure Cooker, Slow Cooker, Rice Cooker, Yogurt Maker, Egg Cooker, Sauté, Steamer, Warmer, and Sterilizer',
+        category: 'Kitchen & Dining',
         images: [],
-        rating: 4.4,
-        reviewCount: 150000,
+        rating: 4.7,
+        reviewCount: 45000,
         availability: 'in_stock'
       },
       // Add the Instant Pot that was causing issues
@@ -226,8 +226,8 @@ class AlternativeProductDataService {
     let nameHints: string[] = [];
     const urlPath = url.toLowerCase();
     
-    if (urlPath.includes('instant-pot')) {
-      nameHints.push('Instant Pot');
+    if (urlPath.includes('instant-pot') || asin === 'B075CYMYK6') {
+      nameHints.push('Instant Pot Duo Plus 9-in-1 Electric Pressure Cooker');
       category = 'Kitchen & Dining';
       estimatedPrice = '$89.99';
     }
@@ -281,7 +281,8 @@ class AlternativeProductDataService {
 
     // Common product patterns in Amazon URLs
     const productPatterns = [
-      { pattern: /instant[-\s]?pot/i, name: 'Instant Pot', brand: 'Instant Pot', category: 'Kitchen & Dining', price: '$89.99' },
+      { pattern: /B075CYMYK6/i, name: 'Instant Pot Duo Plus 9-in-1 Electric Pressure Cooker, Slow Cooker, Rice Cooker, Steamer, Sauté, Yogurt Maker, Warmer & Sterilizer, Includes App With Over 800 Recipes, Stainless Steel, 3 Quart', brand: 'Instant Pot', category: 'Kitchen & Dining', price: '$89.99' },
+      { pattern: /instant[-\s]?pot/i, name: 'Instant Pot Duo Plus 9-in-1 Electric Pressure Cooker', brand: 'Instant Pot', category: 'Kitchen & Dining', price: '$89.99' },
       { pattern: /fire[-\s]?tv/i, name: 'Fire TV Stick', brand: 'Amazon', category: 'Electronics', price: '$39.99' },
       { pattern: /echo[-\s]?dot/i, name: 'Echo Dot', brand: 'Amazon', category: 'Electronics', price: '$49.99' },
       { pattern: /airpods/i, name: 'Apple AirPods', brand: 'Apple', category: 'Electronics', price: '$129.00' },
