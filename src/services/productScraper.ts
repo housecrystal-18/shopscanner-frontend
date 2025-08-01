@@ -159,6 +159,8 @@ class ProductScraperService {
     try {
       const html = await this.makeRequest(url);
       
+      console.log(`Amazon HTML received: ${html.length} characters`);
+      
       // Amazon scraping logic - extract data from HTML
       const product: ScrapedProduct = {
         name: this.extractAmazonTitle(html),
@@ -194,27 +196,47 @@ class ProductScraperService {
   }
 
   private extractAmazonTitle(html: string): string {
-    // Multiple selectors for Amazon title
-    const titleSelectors = [
-      '#productTitle',
-      '.product-title',
-      '[data-automation-id="product-title"]',
-      '.a-size-large.product-title-word-break'
-    ];
+    // Multiple approaches to find Amazon product title
+    
+    // Method 1: Direct ID selector
+    let match = html.match(/<span[^>]*id=['"]productTitle['"][^>]*>([^<]+)<\/span>/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
 
-    for (const selector of titleSelectors) {
-      const match = html.match(new RegExp(`<[^>]*id=['"]?${selector.replace('#', '')}['"]?[^>]*>([^<]+)<`, 'i'));
-      if (match) {
-        return this.cleanText(match[1]);
+    // Method 2: Look for productTitle in any element
+    match = html.match(/id=['"]productTitle['"][^>]*>([^<]+)</i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 3: Meta og:title tag
+    match = html.match(/<meta[^>]*property=['"]og:title['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 4: Look for title in JSON-LD structured data
+    match = html.match(/"name"\s*:\s*"([^"]+)"/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 5: Page title extraction (remove Amazon.com part)
+    match = html.match(/<title>([^<]+)<\/title>/i);
+    if (match) {
+      const title = this.cleanText(match[1]);
+      // Remove common Amazon suffixes
+      const cleanTitle = title
+        .replace(/\s*-\s*Amazon\.com.*$/i, '')
+        .replace(/\s*\|\s*Amazon\.com.*$/i, '')
+        .replace(/\s*:\s*Amazon\.com.*$/i, '');
+      if (cleanTitle.length > 10) {
+        return cleanTitle;
       }
     }
 
-    // Fallback: look for title in meta tags
-    const metaMatch = html.match(/<meta[^>]*property=['"]og:title['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
-    if (metaMatch) {
-      return this.cleanText(metaMatch[1]);
-    }
-
+    console.warn('Could not extract Amazon product title');
     return 'Unknown Product';
   }
 
@@ -242,31 +264,65 @@ class ProductScraperService {
   }
 
   private extractAmazonPrice(html: string): string {
-    const priceSelectors = [
-      '.a-price-whole',
-      '.a-price .a-offscreen',
-      '.a-price-symbol + .a-price-whole',
-      '[data-automation-id="price"]'
+    // Method 1: Look for a-price a-offscreen (most reliable)
+    let match = html.match(/<span[^>]*class=['"][^'"]*a-price[^'"]*a-offscreen[^'"]*['"][^>]*>([^<]+)<\/span>/i);
+    if (match) {
+      const price = this.cleanText(match[1]);
+      if (price.includes('$') && price.match(/[\d]/)) {
+        return price;
+      }
+    }
+
+    // Method 2: Look for any a-offscreen price
+    match = html.match(/<span[^>]*class=['"][^'"]*a-offscreen[^'"]*['"][^>]*>\$?([^<]+)<\/span>/i);
+    if (match) {
+      const price = this.cleanText(match[1]);
+      if (price.match(/[\d,]+/)) {
+        return '$' + price.replace(/[^\d.,]/g, '');
+      }
+    }
+
+    // Method 3: Look for price in JSON data
+    match = html.match(/"price"\s*:\s*"?\$?([^,"]+)"?/i);
+    if (match) {
+      const price = this.cleanText(match[1]);
+      if (price.match(/[\d,]+/)) {
+        return '$' + price.replace(/[^\d.,]/g, '');
+      }
+    }
+
+    // Method 4: Look for priceblock price
+    match = html.match(/<span[^>]*class=['"][^'"]*priceblock[^'"]*['"][^>]*>\$?([^<]+)<\/span>/i);
+    if (match) {
+      const price = this.cleanText(match[1]);
+      if (price.match(/[\d,]+/)) {
+        return '$' + price.replace(/[^\d.,]/g, '');
+      }
+    }
+
+    // Method 5: Generic price pattern search
+    const pricePatterns = [
+      /\$[\d,]+\.?\d{0,2}/g,
+      /[\d,]+\.?\d{0,2}\s*USD/gi,
+      /Price:\s*\$?[\d,]+\.?\d{0,2}/gi
     ];
 
-    for (const selector of priceSelectors) {
-      const regex = new RegExp(`class=['"]?[^'"]*${selector.replace('.', '')}[^'"]*['"]?[^>]*>([^<]+)<`, 'i');
-      const match = html.match(regex);
-      if (match) {
-        const price = this.cleanText(match[1]);
-        if (price.match(/[\d,]+/)) {
-          return '$' + price.replace(/[^\d.,]/g, '');
+    for (const pattern of pricePatterns) {
+      const prices = html.match(pattern);
+      if (prices && prices.length > 0) {
+        // Find the most reasonable price (not too small, not too large)
+        const validPrices = prices
+          .map(p => parseFloat(p.replace(/[^\d.]/g, '')))
+          .filter(p => p > 1 && p < 10000)
+          .sort((a, b) => a - b);
+        
+        if (validPrices.length > 0) {
+          return '$' + validPrices[0].toFixed(2);
         }
       }
     }
 
-    // Look for price patterns in the HTML
-    const pricePattern = /\$[\d,]+(?:\.\d{2})?/g;
-    const prices = html.match(pricePattern);
-    if (prices && prices.length > 0) {
-      return prices[0];
-    }
-
+    console.warn('Could not extract Amazon price');
     return '$0.00';
   }
 
