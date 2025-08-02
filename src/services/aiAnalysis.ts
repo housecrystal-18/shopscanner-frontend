@@ -1,6 +1,7 @@
 // AI Analysis Service - Connects to real Google Cloud Vision API and Web Scraping
 import { productScraperService, type ScrapedProduct } from './productScraper';
 import { alternativeProductDataService } from './alternativeProductData';
+import { priceTrackingService } from './priceTracking';
 
 export interface AIAnalysisRequest {
   image?: string; // Base64 encoded image
@@ -196,6 +197,30 @@ class AIAnalysisService {
           }
         } else {
           console.log('Using cached product data:', scrapedData.name);
+        }
+      }
+
+      // Save price data to tracking system if we have valid product data
+      if (scrapedData && request.url) {
+        try {
+          const productId = this.extractProductId(request.url);
+          if (productId) {
+            await priceTrackingService.savePriceData({
+              productId,
+              productName: scrapedData.name,
+              price: parseFloat(scrapedData.price.replace(/[^0-9.]/g, '')) || 0,
+              originalPrice: scrapedData.originalPrice ? parseFloat(scrapedData.originalPrice.replace(/[^0-9.]/g, '')) : undefined,
+              store: scrapedData.source === 'amazon' ? 'Amazon' : scrapedData.source === 'ebay' ? 'eBay' : scrapedData.seller || 'Unknown',
+              url: request.url,
+              timestamp: Date.now(),
+              availability: scrapedData.availability,
+              seller: scrapedData.seller,
+              confidence: scrapedData.confidence
+            });
+            console.log(`Saved price data for tracking: ${scrapedData.name} - ${scrapedData.price}`);
+          }
+        } catch (error) {
+          console.warn('Failed to save price tracking data:', error);
         }
       }
 
@@ -476,6 +501,29 @@ class AIAnalysisService {
       reader.onerror = reject;
       reader.readAsDataURL(imageFile);
     });
+  }
+
+  // Extract product ID from URL for tracking
+  private extractProductId(url: string): string | null {
+    // Amazon ASIN
+    const asinMatch = url.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})|asin=([A-Z0-9]{10})/i);
+    if (asinMatch) {
+      return asinMatch[1] || asinMatch[2] || asinMatch[3];
+    }
+
+    // eBay item ID
+    const ebayMatch = url.match(/\/itm\/([0-9]{12})|item=([0-9]{12})/i);
+    if (ebayMatch) {
+      return ebayMatch[1] || ebayMatch[2];
+    }
+
+    // Etsy listing ID
+    const etsyMatch = url.match(/\/listing\/([0-9]+)/i);
+    if (etsyMatch) {
+      return etsyMatch[1];
+    }
+
+    return null;
   }
 
   // Check if AI is enabled and working

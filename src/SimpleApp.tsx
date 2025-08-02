@@ -794,6 +794,7 @@ export function SimpleApp() {
                       <PriceHistory 
                         productName={scanResult.product.name}
                         currentPrice={parseFloat(scanResult.product.price.replace('$', ''))}
+                        productUrl={scanResult.url}
                       />
                     </div>
                   </div>

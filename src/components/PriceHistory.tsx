@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, Bell, Calendar, DollarSign, AlertCircle } from 'lucide-react';
+import { priceTrackingService, type PriceHistoryResult } from '../services/priceTracking';
 
 interface PricePoint {
   date: string;
@@ -10,21 +11,82 @@ interface PricePoint {
 interface PriceHistoryProps {
   productName: string;
   currentPrice: number;
+  productId?: string; // ASIN, eBay item ID, etc.
+  productUrl?: string; // For extracting product ID
   currency?: string;
   className?: string;
 }
 
 export function PriceHistory({ 
   productName, 
-  currentPrice, 
+  currentPrice,
+  productId,
+  productUrl,
   currency = 'USD',
   className = '' 
 }: PriceHistoryProps) {
   const [alertEnabled, setAlertEnabled] = useState(false);
   const [targetPrice, setTargetPrice] = useState('');
   const [timeframe, setTimeframe] = useState<'7d' | '30d' | '90d' | '1y'>('30d');
+  const [priceHistory, setPriceHistory] = useState<PriceHistoryResult | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock price history data - in production this would come from an API
+  // Extract product ID from URL if not provided directly
+  const extractProductId = (url: string): string | null => {
+    // Amazon ASIN
+    const asinMatch = url.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})|asin=([A-Z0-9]{10})/i);
+    if (asinMatch) return asinMatch[1] || asinMatch[2] || asinMatch[3];
+
+    // eBay item ID
+    const ebayMatch = url.match(/\/itm\/([0-9]{12})|item=([0-9]{12})/i);
+    if (ebayMatch) return ebayMatch[1] || ebayMatch[2];
+
+    // Etsy listing ID
+    const etsyMatch = url.match(/\/listing\/([0-9]+)/i);
+    if (etsyMatch) return etsyMatch[1];
+
+    return null;
+  };
+
+  // Load real price history data
+  useEffect(() => {
+    const loadPriceHistory = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const resolvedProductId = productId || (productUrl ? extractProductId(productUrl) : null);
+        
+        if (!resolvedProductId) {
+          console.warn('No product ID available for price history');
+          setError('Product ID not available for price tracking');
+          setLoading(false);
+          return;
+        }
+
+        const days = timeframe === '7d' ? 7 : timeframe === '30d' ? 30 : timeframe === '90d' ? 90 : 365;
+        const history = await priceTrackingService.getPriceHistory(resolvedProductId, days);
+        
+        if (history) {
+          setPriceHistory(history);
+          console.log(`Loaded ${history.pricePoints.length} price data points for ${productName}`);
+        } else {
+          console.log('No price history available yet');
+          setPriceHistory(null);
+        }
+      } catch (err) {
+        console.error('Failed to load price history:', err);
+        setError('Failed to load price history');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadPriceHistory();
+  }, [productId, productUrl, timeframe, productName]);
+
+  // Fallback: Mock price history data for demonstration when no real data exists
   const generatePriceHistory = (): PricePoint[] => {
     const basePrice = currentPrice;
     const history: PricePoint[] = [];
@@ -52,13 +114,34 @@ export function PriceHistory({
     return history.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
   };
 
-  const priceHistory = generatePriceHistory();
-  const lowestPrice = Math.min(...priceHistory.map(p => p.price));
-  const highestPrice = Math.max(...priceHistory.map(p => p.price));
-  const averagePrice = priceHistory.reduce((sum, p) => sum + p.price, 0) / priceHistory.length;
+  // Use real price history data if available, otherwise fall back to mock data
+  const displayData = priceHistory ? {
+    history: priceHistory.pricePoints.map(point => ({
+      date: new Date(point.timestamp).toISOString().split('T')[0],
+      price: point.price,
+      store: point.store
+    })),
+    lowestPrice: priceHistory.lowestPrice,
+    highestPrice: priceHistory.highestPrice,
+    currentPrice: priceHistory.currentPrice,
+    priceChange7d: priceHistory.priceChange7d,
+    priceChange30d: priceHistory.priceChange30d,
+    bestStore: priceHistory.bestStore
+  } : {
+    history: generatePriceHistory(),
+    lowestPrice: 0,
+    highestPrice: 0,
+    currentPrice: currentPrice,
+    priceChange7d: undefined,
+    priceChange30d: undefined,
+    bestStore: undefined
+  };
+
+  const { history, lowestPrice, highestPrice } = displayData;
+  const averagePrice = history.length > 0 ? history.reduce((sum, p) => sum + p.price, 0) / history.length : currentPrice;
   
   // Calculate price trend
-  const oldPrice = priceHistory[0]?.price || currentPrice;
+  const oldPrice = history[0]?.price || currentPrice;
   const priceDiff = currentPrice - oldPrice;
   const priceChangePercent = ((priceDiff / oldPrice) * 100).toFixed(1);
   const isIncreasing = priceDiff > 0;
@@ -76,11 +159,25 @@ export function PriceHistory({
 
   const recommendation = getBuyRecommendation();
 
-  const handlePriceAlert = () => {
+  const handlePriceAlert = async () => {
     if (!alertEnabled) {
-      setAlertEnabled(true);
-      // In production, this would call an API to set up the price alert
-      alert(`Price alert set! You'll be notified when ${productName} drops below $${targetPrice || (currentPrice * 0.9).toFixed(2)}`);
+      try {
+        const resolvedProductId = productId || (productUrl ? extractProductId(productUrl) : null);
+        if (!resolvedProductId) {
+          alert('Unable to create price alert: Product ID not available');
+          return;
+        }
+
+        const alertPrice = parseFloat(targetPrice) || currentPrice * 0.9;
+        await priceTrackingService.createPriceAlert(resolvedProductId, alertPrice);
+        
+        setAlertEnabled(true);
+        alert(`Price alert created! You'll be notified when ${productName} drops below $${alertPrice.toFixed(2)}`);
+        console.log(`Created price alert for ${productName} at $${alertPrice.toFixed(2)}`);
+      } catch (error) {
+        console.error('Failed to create price alert:', error);
+        alert('Failed to create price alert. Please try again.');
+      }
     } else {
       setAlertEnabled(false);
       alert('Price alert disabled');
@@ -90,20 +187,40 @@ export function PriceHistory({
   // Create simple SVG chart
   const chartWidth = 300;
   const chartHeight = 100;
-  const maxPrice = Math.max(...priceHistory.map(p => p.price));
-  const minPrice = Math.min(...priceHistory.map(p => p.price));
-  const priceRange = maxPrice - minPrice || 1;
+  const chartMaxPrice = Math.max(...history.map(p => p.price));
+  const chartMinPrice = Math.min(...history.map(p => p.price));
+  const priceRange = chartMaxPrice - chartMinPrice || 1;
 
-  const chartPoints = priceHistory.map((point, index) => {
-    const x = (index / (priceHistory.length - 1)) * chartWidth;
-    const y = chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+  const chartPoints = history.map((point, index) => {
+    const x = (index / (history.length - 1)) * chartWidth;
+    const y = chartHeight - ((point.price - chartMinPrice) / priceRange) * chartHeight;
     return `${x},${y}`;
   }).join(' ');
 
   return (
     <div className={`bg-white rounded-lg border p-6 ${className}`}>
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900">Price History</h3>
+        <div className="flex items-center space-x-3">
+          <h3 className="text-lg font-semibold text-gray-900">Price History</h3>
+          {loading && (
+            <span className="text-sm text-gray-500">Loading...</span>
+          )}
+          {!loading && priceHistory && (
+            <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">
+              Real Data ({priceHistory.pricePoints.length} points)
+            </span>
+          )}
+          {!loading && !priceHistory && (
+            <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">
+              Demo Data
+            </span>
+          )}
+          {error && (
+            <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full">
+              {error}
+            </span>
+          )}
+        </div>
         <div className="flex space-x-2">
           {(['7d', '30d', '90d', '1y'] as const).map((period) => (
             <button
@@ -162,9 +279,9 @@ export function PriceHistory({
             />
             
             {/* Data points */}
-            {priceHistory.map((point, index) => {
-              const x = (index / (priceHistory.length - 1)) * chartWidth;
-              const y = chartHeight - ((point.price - minPrice) / priceRange) * chartHeight;
+            {history.map((point, index) => {
+              const x = (index / (history.length - 1)) * chartWidth;
+              const y = chartHeight - ((point.price - chartMinPrice) / priceRange) * chartHeight;
               return (
                 <circle
                   key={index}
@@ -252,7 +369,7 @@ export function PriceHistory({
       <div className="mt-4">
         <h5 className="text-sm font-medium text-gray-900 mb-2">Recent Price Changes</h5>
         <div className="space-y-1 max-h-32 overflow-y-auto">
-          {priceHistory.slice(-5).reverse().map((point, index) => (
+          {history.slice(-5).reverse().map((point, index) => (
             <div key={index} className="flex justify-between items-center text-xs text-gray-600">
               <span>{new Date(point.date).toLocaleDateString()}</span>
               <span>{point.store}</span>
