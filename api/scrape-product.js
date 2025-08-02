@@ -63,6 +63,12 @@ export default async function handler(req, res) {
       headers['sec-ch-ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
       headers['sec-ch-ua-mobile'] = '?0';
       headers['sec-ch-ua-platform'] = '"Windows"';
+    } else if (domain.includes('ebay')) {
+      headers['Accept-Language'] = 'en-US,en;q=0.9';
+      headers['sec-ch-ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
+      headers['sec-ch-ua-mobile'] = '?0';
+      headers['sec-ch-ua-platform'] = '"Windows"';
+      headers['Referer'] = 'https://www.ebay.com/';
     }
 
     console.log(`Attempting to scrape: ${domain} (attempt ${attempt})`);

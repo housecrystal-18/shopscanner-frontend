@@ -23,10 +23,26 @@ export interface ProductDataResult {
 
 class AlternativeProductDataService {
   
-  // Extract ASIN from Amazon URL
-  private extractASIN(url: string): string | null {
+  // Extract product ID from URL (ASIN for Amazon, item ID for eBay, etc.)
+  private extractProductId(url: string): string | null {
+    // Amazon ASIN
     const asinMatch = url.match(/\/dp\/([A-Z0-9]{10})|\/gp\/product\/([A-Z0-9]{10})|asin=([A-Z0-9]{10})/i);
-    return asinMatch ? (asinMatch[1] || asinMatch[2] || asinMatch[3]) : null;
+    if (asinMatch) {
+      return asinMatch[1] || asinMatch[2] || asinMatch[3];
+    }
+
+    // eBay item ID
+    const ebayMatch = url.match(/\/itm\/([0-9]{12})|item=([0-9]{12})/i);
+    if (ebayMatch) {
+      return ebayMatch[1] || ebayMatch[2];
+    }
+
+    return null;
+  }
+
+  // Keep the old method name for compatibility
+  private extractASIN(url: string): string | null {
+    return this.extractProductId(url);
   }
 
   async getProductData(request: ProductDataRequest): Promise<ProductDataResult> {
@@ -208,6 +224,18 @@ class AlternativeProductDataService {
         rating: 4.5,
         reviewCount: 100000,
         availability: 'in_stock'
+      },
+      // eBay item examples (using eBay item IDs as keys)
+      '123456789012': {
+        name: 'Vintage Rolex Submariner Watch',
+        brand: 'Rolex',
+        price: '$8,500.00',
+        description: 'Authentic vintage Rolex Submariner in excellent condition',
+        category: 'Watches',
+        images: [],
+        rating: undefined,
+        reviewCount: undefined,
+        availability: 'in_stock'
       }
       // We can expand this database as we encounter more products
     };
@@ -285,15 +313,24 @@ class AlternativeProductDataService {
     let category = 'General';
     let price = '$0.00';
 
-    // Common product patterns in Amazon URLs
+    // Common product patterns in URLs
     const productPatterns = [
+      // Amazon-specific patterns
       { pattern: /B075CYMYK6/i, name: 'Instant Pot Duo Plus 9-in-1 Electric Pressure Cooker, Slow Cooker, Rice Cooker, Steamer, Sauté, Yogurt Maker, Warmer & Sterilizer, Includes App With Over 800 Recipes, Stainless Steel, 3 Quart', brand: 'Instant Pot', category: 'Kitchen & Dining', price: '$89.99' },
       { pattern: /instant[-\s]?pot/i, name: 'Instant Pot Duo Plus 9-in-1 Electric Pressure Cooker', brand: 'Instant Pot', category: 'Kitchen & Dining', price: '$89.99' },
       { pattern: /fire[-\s]?tv/i, name: 'Fire TV Stick', brand: 'Amazon', category: 'Electronics', price: '$39.99' },
       { pattern: /echo[-\s]?dot/i, name: 'Echo Dot', brand: 'Amazon', category: 'Electronics', price: '$49.99' },
+      
+      // eBay-specific patterns (auction and Buy It Now)
+      { pattern: /rolex/i, name: 'Luxury Watch', brand: 'Rolex', category: 'Watches', price: '$8,500.00' },
+      { pattern: /vintage[-\s]?watch/i, name: 'Vintage Watch', brand: 'Various', category: 'Watches', price: '$500.00' },
+      { pattern: /collectible/i, name: 'Collectible Item', brand: 'Various', category: 'Collectibles', price: '$150.00' },
+      
+      // Cross-platform patterns
       { pattern: /airpods/i, name: 'Apple AirPods', brand: 'Apple', category: 'Electronics', price: '$129.00' },
       { pattern: /iphone/i, name: 'iPhone', brand: 'Apple', category: 'Electronics', price: '$699.00' },
-      { pattern: /samsung[-\s]?galaxy/i, name: 'Samsung Galaxy', brand: 'Samsung', category: 'Electronics', price: '$599.00' }
+      { pattern: /samsung[-\s]?galaxy/i, name: 'Samsung Galaxy', brand: 'Samsung', category: 'Electronics', price: '$599.00' },
+      { pattern: /nike[-\s]?shoes?/i, name: 'Nike Athletic Shoes', brand: 'Nike', category: 'Footwear', price: '$120.00' }
     ];
 
     for (const pattern of productPatterns) {

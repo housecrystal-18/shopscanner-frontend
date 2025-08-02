@@ -472,19 +472,62 @@ class ProductScraperService {
   private calculateConfidence(html: string, source: string): number {
     let confidence = 0.5; // Base confidence
     
-    // Increase confidence based on data quality
-    if (html.includes('productTitle') || html.includes('product-title')) confidence += 0.2;
-    if (html.includes('a-price')) confidence += 0.2;
-    if (html.includes('reviews')) confidence += 0.1;
-    if (html.includes('in stock')) confidence += 0.1;
+    if (source === 'amazon') {
+      // Amazon-specific confidence indicators
+      if (html.includes('productTitle') || html.includes('product-title')) confidence += 0.2;
+      if (html.includes('a-price')) confidence += 0.2;
+      if (html.includes('reviews')) confidence += 0.1;
+      if (html.includes('in stock')) confidence += 0.1;
+    } else if (source === 'ebay') {
+      // eBay-specific confidence indicators
+      if (html.includes('x-title-label-lbl') || html.includes('item-title')) confidence += 0.2;
+      if (html.includes('currentPrice') || html.includes('price')) confidence += 0.2;
+      if (html.includes('seller') || html.includes('feedback')) confidence += 0.1;
+      if (html.includes('buy it now') || html.includes('auction')) confidence += 0.1;
+    }
     
     return Math.min(confidence, 1.0);
   }
 
-  // Placeholder methods for other platforms
+  // eBay scraping implementation
   private async scrapeEbay(url: string): Promise<ScrapingResult> {
-    // eBay scraping implementation
-    return { success: false, error: 'eBay scraping not implemented yet' };
+    try {
+      const html = await this.makeRequest(url);
+      
+      console.log(`eBay HTML received: ${html.length} characters`);
+      
+      // eBay scraping logic - extract data from HTML
+      const product: ScrapedProduct = {
+        name: this.extractEbayTitle(html),
+        brand: this.extractEbayBrand(html),
+        price: this.extractEbayPrice(html),
+        originalPrice: this.extractEbayOriginalPrice(html),
+        availability: this.extractEbayAvailability(html),
+        rating: this.extractEbayRating(html),
+        reviewCount: this.extractEbayReviewCount(html),
+        images: this.extractEbayImages(html),
+        description: this.extractEbayDescription(html),
+        seller: this.extractEbaySeller(html),
+        sellerRating: this.extractEbaySellerRating(html),
+        category: this.extractEbayCategory(html),
+        features: this.extractEbayFeatures(html),
+        specifications: this.extractEbaySpecs(html),
+        lastUpdated: Date.now(),
+        source: 'ebay',
+        confidence: this.calculateConfidence(html, 'ebay')
+      };
+
+      return {
+        success: true,
+        product
+      };
+
+    } catch (error) {
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'eBay scraping failed'
+      };
+    }
   }
 
   private async scrapeEtsy(url: string): Promise<ScrapingResult> {
@@ -534,6 +577,269 @@ class ProductScraperService {
   clearCachedProduct(url: string): void {
     this.cache.delete(url);
     console.log(`Cleared cache for URL: ${url}`);
+  }
+
+  // eBay-specific extraction methods
+  private extractEbayTitle(html: string): string {
+    // Method 1: Main product title
+    let match = html.match(/<h1[^>]*id=['"]x-title-label-lbl['"][^>]*>([^<]+)<\/h1>/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 2: Alternative title selector
+    match = html.match(/<h1[^>]*class=['"][^'"]*title[^'"]*['"][^>]*>([^<]+)<\/h1>/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 3: Meta og:title
+    match = html.match(/<meta[^>]*property=['"]og:title['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+    if (match) {
+      const title = this.cleanText(match[1]);
+      // Remove eBay suffix
+      return title.replace(/\s*\|\s*eBay.*$/i, '');
+    }
+
+    // Method 4: Page title
+    match = html.match(/<title>([^<]+)<\/title>/i);
+    if (match) {
+      const title = this.cleanText(match[1]);
+      return title.replace(/\s*\|\s*eBay.*$/i, '');
+    }
+
+    console.warn('Could not extract eBay product title');
+    return 'Unknown eBay Product';
+  }
+
+  private extractEbayPrice(html: string): string {
+    // Method 1: Current price
+    let match = html.match(/<span[^>]*class=['"][^'"]*price[^'"]*['"][^>]*>[\s\S]*?\$([0-9,]+\.?\d{0,2})[\s\S]*?<\/span>/i);
+    if (match) {
+      return '$' + match[1];
+    }
+
+    // Method 2: Buy It Now price
+    match = html.match(/["']currentPrice["']:\s*["']?\$?([0-9,]+\.?\d{0,2})["']?/i);
+    if (match) {
+      return '$' + match[1];
+    }
+
+    // Method 3: Auction current bid
+    match = html.match(/current\s+bid[^$]*\$([0-9,]+\.?\d{0,2})/i);
+    if (match) {
+      return '$' + match[1] + ' (current bid)';
+    }
+
+    // Method 4: Generic price pattern
+    const pricePatterns = [
+      /\$[0-9,]+\.?\d{0,2}/g,
+      /USD\s*[0-9,]+\.?\d{0,2}/gi
+    ];
+
+    for (const pattern of pricePatterns) {
+      const prices = html.match(pattern);
+      if (prices && prices.length > 0) {
+        const validPrices = prices
+          .map(p => parseFloat(p.replace(/[^0-9.]/g, '')))
+          .filter(p => p > 1 && p < 50000)
+          .sort((a, b) => a - b);
+        
+        if (validPrices.length > 0) {
+          return '$' + validPrices[0].toFixed(2);
+        }
+      }
+    }
+
+    console.warn('Could not extract eBay price');
+    return '$0.00';
+  }
+
+  private extractEbayOriginalPrice(html: string): string | undefined {
+    // Look for strikethrough or "was" prices
+    const originalPricePatterns = [
+      /was\s*\$([0-9,]+\.?\d{0,2})/i,
+      /originally\s*\$([0-9,]+\.?\d{0,2})/i,
+      /<s[^>]*>\s*\$([0-9,]+\.?\d{0,2})\s*<\/s>/i
+    ];
+
+    for (const pattern of originalPricePatterns) {
+      const match = html.match(pattern);
+      if (match) {
+        return '$' + match[1];
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractEbayBrand(html: string): string {
+    // Method 1: Brand in structured data
+    let match = html.match(/"brand":\s*"([^"]+)"/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 2: Brand in item specifics
+    match = html.match(/brand[^>]*>([^<]+)</i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 3: Extract from title (common brand names)
+    const title = this.extractEbayTitle(html).toLowerCase();
+    const commonBrands = ['apple', 'samsung', 'nike', 'adidas', 'sony', 'microsoft', 'canon', 'nikon'];
+    
+    for (const brand of commonBrands) {
+      if (title.includes(brand)) {
+        return brand.charAt(0).toUpperCase() + brand.slice(1);
+      }
+    }
+
+    return 'Unknown Brand';
+  }
+
+  private extractEbayAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' {
+    const htmlLower = html.toLowerCase();
+    
+    if (htmlLower.includes('in stock') || htmlLower.includes('available')) {
+      return 'in_stock';
+    }
+    if (htmlLower.includes('out of stock') || htmlLower.includes('sold out')) {
+      return 'out_of_stock';
+    }
+    if (htmlLower.includes('limited') || htmlLower.includes('few left')) {
+      return 'limited';
+    }
+    if (htmlLower.includes('auction') || htmlLower.includes('bidding')) {
+      return 'in_stock'; // Auctions are available for bidding
+    }
+    
+    return 'unknown';
+  }
+
+  private extractEbayRating(html: string): number | undefined {
+    // eBay doesn't typically show product ratings like Amazon
+    // But sellers have feedback scores
+    return undefined;
+  }
+
+  private extractEbayReviewCount(html: string): number | undefined {
+    // eBay shows feedback count for sellers, not product reviews
+    return undefined;
+  }
+
+  private extractEbayImages(html: string): string[] {
+    const images: string[] = [];
+    
+    // Look for eBay product images
+    const imageMatches = html.match(/https:\/\/[^"'\s]*\.(?:jpg|jpeg|png|webp)[^"'\s]*/gi);
+    if (imageMatches) {
+      // Filter for eBay product images
+      const productImages = imageMatches.filter(img => 
+        img.includes('ebayimg.com') && 
+        !img.includes('logo') &&
+        !img.includes('icon') &&
+        img.includes('/s-l')
+      );
+      images.push(...productImages.slice(0, 5));
+    }
+    
+    return images;
+  }
+
+  private extractEbayDescription(html: string): string {
+    // Method 1: Item description
+    let match = html.match(/<div[^>]*class=['"][^'"]*item-description[^'"]*['"][^>]*>([^<]+)/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 2: Meta description
+    match = html.match(/<meta[^>]*name=['"]description['"][^>]*content=['"]([^'"]+)['"][^>]*>/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+    
+    return 'No description available';
+  }
+
+  private extractEbaySeller(html: string): string {
+    // Method 1: Seller ID
+    let match = html.match(/seller[^>]*>([^<]+)</i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 2: From structured data
+    match = html.match(/"seller":\s*"([^"]+)"/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+    
+    return 'eBay Seller';
+  }
+
+  private extractEbaySellerRating(html: string): number | undefined {
+    // Look for seller feedback percentage
+    const ratingMatch = html.match(/([0-9.]+)%\s*positive/i);
+    if (ratingMatch) {
+      return parseFloat(ratingMatch[1]);
+    }
+    
+    return undefined;
+  }
+
+  private extractEbayCategory(html: string): string {
+    // Method 1: Breadcrumb navigation
+    let match = html.match(/breadcrumb[^>]*>([^<]+)</i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+
+    // Method 2: Category from structured data
+    match = html.match(/"category":\s*"([^"]+)"/i);
+    if (match) {
+      return this.cleanText(match[1]);
+    }
+    
+    return 'General';
+  }
+
+  private extractEbayFeatures(html: string): string[] {
+    const features: string[] = [];
+    
+    // Look for item specifics or bullet points
+    const featureMatches = html.match(/<li[^>]*>([^<]+)<\/li>/gi);
+    if (featureMatches) {
+      features.push(...featureMatches.map(match => 
+        this.cleanText(match.replace(/<[^>]*>/g, ''))
+      ).slice(0, 8));
+    }
+    
+    return features;
+  }
+
+  private extractEbaySpecs(html: string): { [key: string]: string } {
+    const specs: { [key: string]: string } = {};
+    
+    // Look for item specifics table
+    const specMatches = html.match(/item\s*specifics[\s\S]*?<table[\s\S]*?<\/table>/i);
+    if (specMatches) {
+      const tableRows = specMatches[0].match(/<tr[^>]*>[\s\S]*?<\/tr>/gi);
+      if (tableRows) {
+        tableRows.forEach(row => {
+          const cells = row.match(/<td[^>]*>([^<]+)<\/td>/gi);
+          if (cells && cells.length >= 2) {
+            const key = this.cleanText(cells[0].replace(/<[^>]*>/g, ''));
+            const value = this.cleanText(cells[1].replace(/<[^>]*>/g, ''));
+            specs[key] = value;
+          }
+        });
+      }
+    }
+    
+    return specs;
   }
 }
 
