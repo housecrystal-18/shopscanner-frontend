@@ -531,13 +531,468 @@ class ProductScraperService {
   }
 
   private async scrapeEtsy(url: string): Promise<ScrapingResult> {
-    // Etsy scraping implementation  
-    return { success: false, error: 'Etsy scraping not implemented yet' };
+    try {
+      const html = await this.makeRequest(url);
+      console.log(`Etsy HTML received: ${html.length} characters`);
+      
+      const product: ScrapedProduct = {
+        name: this.extractEtsyTitle(html),
+        brand: this.extractEtsyShop(html),
+        price: this.extractEtsyPrice(html),
+        originalPrice: this.extractEtsyOriginalPrice(html),
+        availability: this.extractEtsyAvailability(html),
+        rating: this.extractEtsyRating(html),
+        reviewCount: this.extractEtsyReviewCount(html),
+        images: this.extractEtsyImages(html),
+        description: this.extractEtsyDescription(html),
+        seller: this.extractEtsyShop(html),
+        sellerRating: this.extractEtsyShopRating(html),
+        category: this.extractEtsyCategory(html),
+        features: this.extractEtsyFeatures(html),
+        specifications: this.extractEtsySpecifications(html),
+        lastUpdated: Date.now(),
+        source: 'etsy',
+        confidence: this.calculateConfidence(html, 'etsy')
+      };
+
+      return { success: true, product };
+    } catch (error) {
+      console.error('Etsy scraping failed:', error);
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Etsy scraping failed',
+        blocked: error instanceof Error && error.message.includes('blocked')
+      };
+    }
   }
 
   private async scrapeGeneric(url: string): Promise<ScrapingResult> {
     // Generic scraping for unknown sites
     return { success: false, error: 'Generic scraping not implemented yet' };
+  }
+
+  // Etsy-specific extraction methods
+  private extractEtsyTitle(html: string): string {
+    console.log('Extracting Etsy title from HTML...');
+    
+    // Modern Etsy title patterns - try most specific first
+    const titlePatterns = [
+      // JSON-LD structured data
+      /"@type":"Product"[^}]*"name":"([^"]+)"/i,
+      /"name":"([^"]+)"[^}]*"@type":"Product"/i,
+      
+      // Modern Etsy data attributes and classes
+      /<h1[^>]*data-test-id="listing-page-title"[^>]*>([^<]+)<\/h1>/i,
+      /<h1[^>]*class="[^"]*listing-page-title[^"]*"[^>]*>([^<]+)<\/h1>/i,
+      /<h1[^>]*class="[^"]*wt-text-body-03[^"]*"[^>]*>([^<]+)<\/h1>/i,
+      
+      // Meta and title tags
+      /<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i,
+      /<meta[^>]*name="twitter:title"[^>]*content="([^"]+)"/i,
+      /<title>([^|<\-–]+)[\|<\-–]/i,
+      
+      // JSON data patterns
+      /"title":"([^"]+)"/i,
+      /"listing_title":"([^"]+)"/i,
+      
+      // General H1 patterns (fallback)
+      /<h1[^>]*>([^<]+)<\/h1>/i
+    ];
+
+    for (let i = 0; i < titlePatterns.length; i++) {
+      const pattern = titlePatterns[i];
+      const match = html.match(pattern);
+      
+      if (match && match[1]) {
+        let title = this.cleanText(match[1]);
+        
+        // Remove common Etsy suffixes and prefixes
+        title = title
+          .replace(/\s*-\s*Etsy$/i, '')
+          .replace(/^Etsy\s*-\s*/i, '')
+          .replace(/\s*\|\s*Etsy$/i, '')
+          .replace(/\s*–\s*Etsy$/i, '')
+          .trim();
+        
+        // Skip overly generic titles
+        if (title.length > 5 && 
+            !title.toLowerCase().includes('etsy') && 
+            !title.toLowerCase().includes('loading') &&
+            !title.toLowerCase().includes('error')) {
+          console.log(`Found valid title: ${title}`);
+          return title;
+        }
+      }
+    }
+
+    console.log('No valid title found, returning default');
+    return 'Etsy Product';
+  }
+
+  private extractEtsyShop(html: string): string {
+    const shopPatterns = [
+      /"shop_name":"([^"]+)"/i,
+      /data-shop-name="([^"]+)"/i,
+      /<a[^>]*href="\/shop\/[^"]*"[^>]*>([^<]+)<\/a>/i,
+      /by\s*<[^>]*>([^<]+)<\/[^>]*>/i,
+      /"seller_user_id":"([^"]+)"/i
+    ];
+
+    for (const pattern of shopPatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        const shop = this.cleanText(match[1]);
+        if (shop.length > 2) {
+          return shop;
+        }
+      }
+    }
+
+    return 'Etsy Shop';
+  }
+
+  private extractEtsyPrice(html: string): string {
+    console.log('Extracting Etsy price from HTML...');
+    
+    // Modern Etsy price patterns - try most specific first
+    const pricePatterns = [
+      // JSON-LD structured data
+      /"@type":"Product"[^}]*"offers"[^}]*"price":"([^"]+)"/i,
+      /"offers"[^}]*"price":"([^"]+)"/i,
+      
+      // Modern Etsy data attributes and classes
+      /data-test-id="listing-price"[^>]*>([^<]+)</i,
+      /class="[^"]*price-display[^"]*"[^>]*>([^<]+)</i,
+      /class="[^"]*listing-price[^"]*"[^>]*>([^<]+)</i,
+      /class="[^"]*p-xs-2[^"]*"[^>]*>\s*([A-Z]{1,3}[\s$€£¥₹₩]+[\d,]+\.?\d*)/i,
+      
+      // JSON data in script tags
+      /"currency_formatted_short":"([^"]+)"/i,
+      /"formatted_price":"([^"]+)"/i,
+      /"price_int":(\d+)/i, // Price in cents
+      /"price":"([^"]+)"/i,
+      
+      // HTML patterns for current price display
+      /<span[^>]*class="[^"]*currency-value[^"]*"[^>]*>([^<]+)<\/span>/i,
+      /<span[^>]*class="[^"]*shop2-review-review[^"]*"[^>]*>.*?([A-Z]{1,3}[\s$€£¥₹₩]*[\d,]+\.?\d*)/i,
+      /<p[^>]*class="[^"]*wt-text-title-03[^"]*"[^>]*>([^<]*[A-Z]{1,3}[\s$€£¥₹₩]*[\d,]+\.?\d*[^<]*)<\/p>/i,
+      
+      // General currency patterns (more specific)
+      /US\$\s*([\d,]+\.?\d*)/i,
+      /USD\s*([\d,]+\.?\d*)/i,
+      /\$\s*([\d,]+\.?\d*)/i,
+      /£\s*([\d,]+\.?\d*)/i,
+      /€\s*([\d,]+\.?\d*)/i,
+      /¥\s*([\d,]+\.?\d*)/i,
+      
+      // Broad currency patterns (fallback)
+      /([A-Z]{1,3}[\s$€£¥₹₩]*[\d,]+\.?\d*)/gi
+    ];
+
+    for (let i = 0; i < pricePatterns.length; i++) {
+      const pattern = pricePatterns[i];
+      const matches = html.match(pattern);
+      
+      if (matches) {
+        console.log(`Pattern ${i} matched:`, pattern, matches);
+        
+        if (pattern.global) {
+          // For global patterns, find the most reasonable price
+          for (const match of matches) {
+            const cleanPrice = this.cleanText(match);
+            const numericValue = parseFloat(cleanPrice.replace(/[^0-9.]/g, ''));
+            
+            // Filter out unreasonable prices (too high/low for typical Etsy items)
+            if (cleanPrice.length > 1 && numericValue > 0.1 && numericValue < 50000) {
+              console.log(`Found valid price: ${cleanPrice}`);
+              return this.formatPrice(cleanPrice);
+            }
+          }
+        } else if (matches[1]) {
+          let cleanPrice = this.cleanText(matches[1]);
+          
+          // Handle price_int (cents) pattern
+          if (pattern.source.includes('price_int')) {
+            const cents = parseInt(matches[1]);
+            if (cents > 0) {
+              cleanPrice = `$${(cents / 100).toFixed(2)}`;
+            }
+          }
+          
+          const numericValue = parseFloat(cleanPrice.replace(/[^0-9.]/g, ''));
+          
+          if (cleanPrice.length > 1 && numericValue > 0.1 && numericValue < 50000) {
+            console.log(`Found valid price: ${cleanPrice}`);
+            return this.formatPrice(cleanPrice);
+          }
+        }
+      }
+    }
+
+    console.log('No valid price found, returning default');
+    return '$0.00';
+  }
+
+  private formatPrice(price: string): string {
+    // Clean and format the price consistently
+    const cleaned = price.replace(/\s+/g, ' ').trim();
+    
+    // If it already has a currency symbol, return as-is
+    if (/^[A-Z]{1,3}[\s$€£¥₹₩]/.test(cleaned) || /^[$€£¥₹₩]/.test(cleaned)) {
+      return cleaned;
+    }
+    
+    // If it's just numbers, add dollar sign
+    if (/^\d+\.?\d*$/.test(cleaned)) {
+      return `$${cleaned}`;
+    }
+    
+    // Try to extract just the number and add dollar sign
+    const numMatch = cleaned.match(/([\d,]+\.?\d*)/);
+    if (numMatch) {
+      return `$${numMatch[1]}`;
+    }
+    
+    return cleaned;
+  }
+
+  private extractEtsyOriginalPrice(html: string): string | undefined {
+    const originalPricePatterns = [
+      /"currency_formatted_long":"([^"]+)"/i,
+      /<span[^>]*class="[^"]*original[^"]*price[^"]*"[^>]*>([^<]+)<\/span>/i,
+      /<span[^>]*class="[^"]*was[^"]*"[^>]*>([^<]+)<\/span>/i
+    ];
+
+    for (const pattern of originalPricePatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        const originalPrice = this.cleanText(match[1]);
+        if (originalPrice.length > 1) {
+          return originalPrice;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractEtsyAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' {
+    if (html.toLowerCase().includes('sold out') || 
+        html.toLowerCase().includes('unavailable') ||
+        html.toLowerCase().includes('out of stock')) {
+      return 'out_of_stock';
+    }
+
+    if (html.toLowerCase().includes('only') && html.toLowerCase().includes('left') ||
+        html.toLowerCase().includes('limited')) {
+      return 'limited';
+    }
+
+    if (html.toLowerCase().includes('in stock') || 
+        html.toLowerCase().includes('available') ||
+        html.toLowerCase().includes('add to cart')) {
+      return 'in_stock';
+    }
+
+    return 'unknown';
+  }
+
+  private extractEtsyRating(html: string): number | undefined {
+    const ratingPatterns = [
+      /"rating":"(\d+\.?\d*)"/i,
+      /(\d+\.?\d*)\s*out\s*of\s*5\s*stars/i,
+      /(\d+\.?\d*)\s*\/\s*5/i,
+      /data-rating="(\d+\.?\d*)"/i
+    ];
+
+    for (const pattern of ratingPatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        const rating = parseFloat(match[1]);
+        if (rating >= 0 && rating <= 5) {
+          return rating;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractEtsyReviewCount(html: string): number | undefined {
+    const reviewPatterns = [
+      /"review_count":(\d+)/i,
+      /(\d+)\s*reviews?/i,
+      /(\d+)\s*customer\s*reviews?/i,
+      /(\d{1,6})\s*(?:people\s*)?(?:have\s*)?(?:bought|purchased)/i
+    ];
+
+    for (const pattern of reviewPatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        const count = parseInt(match[1]);
+        if (count >= 0) {
+          return count;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractEtsyImages(html: string): string[] {
+    const images: string[] = [];
+    
+    // Etsy image patterns
+    const imagePatterns = [
+      /"url_570xN":"([^"]+)"/gi,
+      /"url_fullxfull":"([^"]+)"/gi,
+      /"url":"(https:\/\/i\.etsystatic\.com[^"]+)"/gi,
+      /src="(https:\/\/i\.etsystatic\.com[^"]+)"/gi
+    ];
+
+    for (const pattern of imagePatterns) {
+      let match;
+      while ((match = pattern.exec(html)) !== null) {
+        if (match[1] && !images.includes(match[1])) {
+          images.push(match[1]);
+        }
+      }
+    }
+
+    return images.slice(0, 10); // Limit to 10 images
+  }
+
+  private extractEtsyDescription(html: string): string {
+    const descPatterns = [
+      /"description":"([^"]+)"/i,
+      /<div[^>]*data-test-id="[^"]*description[^"]*"[^>]*>([^<]+)/i,
+      /<div[^>]*class="[^"]*description[^"]*"[^>]*>([^<]+)/i,
+      /<meta[^>]*name="description"[^>]*content="([^"]+)"/i
+    ];
+
+    for (const pattern of descPatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        let desc = this.cleanText(match[1]);
+        // Clean up common JSON escapes
+        desc = desc.replace(/\\n/g, ' ').replace(/\\"/g, '"').replace(/\\\\/g, '\\');
+        if (desc.length > 10) {
+          return desc;
+        }
+      }
+    }
+
+    return 'Handmade item available on Etsy';
+  }
+
+  private extractEtsyShopRating(html: string): number | undefined {
+    const shopRatingPatterns = [
+      /"shop_rating":"(\d+\.?\d*)"/i,
+      /shop\s*rating[^>]*>(\d+\.?\d*)/i
+    ];
+
+    for (const pattern of shopRatingPatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        const rating = parseFloat(match[1]);
+        if (rating >= 0 && rating <= 5) {
+          return rating;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private extractEtsyCategory(html: string): string {
+    const categoryPatterns = [
+      /"taxonomy_path":"([^"]+)"/i,
+      /"category":"([^"]+)"/i,
+      /breadcrumb[^>]*>([^<]+)</i
+    ];
+
+    for (const pattern of categoryPatterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        let category = this.cleanText(match[1]);
+        // Clean up taxonomy paths
+        if (category.includes('/')) {
+          category = category.split('/').pop() || category;
+        }
+        if (category.length > 2) {
+          return category;
+        }
+      }
+    }
+
+    return 'Handmade';
+  }
+
+  private extractEtsyFeatures(html: string): string[] {
+    const features: string[] = [];
+    
+    // Look for features in various formats
+    const featurePatterns = [
+      /"materials":\["([^"]+)"/gi,
+      /"tags":\["([^"]+)"/gi,
+      /<li[^>]*>([^<]+)<\/li>/gi
+    ];
+
+    for (const pattern of featurePatterns) {
+      let match;
+      while ((match = pattern.exec(html)) !== null) {
+        if (match[1]) {
+          const feature = this.cleanText(match[1]);
+          if (feature.length > 3 && !features.includes(feature)) {
+            features.push(feature);
+          }
+        }
+      }
+    }
+
+    return features.slice(0, 8); // Limit to 8 features
+  }
+
+  private extractEtsySpecifications(html: string): { [key: string]: string } {
+    const specs: { [key: string]: string } = {};
+    
+    // Look for specifications in JSON data
+    const specPatterns = [
+      /"materials":\["([^"]+)"/i,
+      /"dimensions":"([^"]+)"/i,
+      /"weight":"([^"]+)"/i,
+      /"processing_time":"([^"]+)"/i
+    ];
+
+    if (specPatterns[0]) {
+      const materialMatch = html.match(specPatterns[0]);
+      if (materialMatch && materialMatch[1]) {
+        specs['Materials'] = this.cleanText(materialMatch[1]);
+      }
+    }
+
+    if (specPatterns[1]) {
+      const dimensionMatch = html.match(specPatterns[1]);
+      if (dimensionMatch && dimensionMatch[1]) {
+        specs['Dimensions'] = this.cleanText(dimensionMatch[1]);
+      }
+    }
+
+    if (specPatterns[2]) {
+      const weightMatch = html.match(specPatterns[2]);
+      if (weightMatch && weightMatch[1]) {
+        specs['Weight'] = this.cleanText(weightMatch[1]);
+      }
+    }
+
+    if (specPatterns[3]) {
+      const processingMatch = html.match(specPatterns[3]);
+      if (processingMatch && processingMatch[1]) {
+        specs['Processing Time'] = this.cleanText(processingMatch[1]);
+      }
+    }
+
+    return specs;
   }
 
   private cleanText(text: string): string {

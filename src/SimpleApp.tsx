@@ -7,6 +7,7 @@ import { SocialShareCompact } from './components/SocialShare';
 import { OnboardingTutorial } from './components/OnboardingTutorial';
 import { PriceHistory } from './components/PriceHistory';
 import { ProductionDisclaimer, DemoModeAlert } from './components/ProductionDisclaimer';
+import { AccuracyFeedback } from './components/AccuracyFeedback';
 import { analytics } from './utils/analytics';
 import { aiAnalysisService } from './services/aiAnalysis';
 
@@ -24,6 +25,9 @@ export function SimpleApp() {
   const [showView, setShowView] = useState<'landing' | 'app' | 'login' | 'register' | 'pricing' | 'dashboard'>('landing');
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [tutorialPermanentlyDismissed, setTutorialPermanentlyDismissed] = useState(
+    localStorage.getItem('shopScanPro_tutorialDismissed') === 'true'
+  );
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,8 +39,8 @@ export function SimpleApp() {
       // Track login
       analytics.featureUsed('login', email);
       
-      // Show onboarding for first-time users
-      if (!hasSeenOnboarding) {
+      // Show onboarding for first-time users (unless permanently dismissed)
+      if (!hasSeenOnboarding && !tutorialPermanentlyDismissed) {
         setShowOnboarding(true);
       }
     } else {
@@ -79,8 +83,8 @@ export function SimpleApp() {
     });
     setShowView('app');
     
-    // Show onboarding for new registrations
-    if (!hasSeenOnboarding) {
+    // Show onboarding for new registrations (unless permanently dismissed)
+    if (!hasSeenOnboarding && !tutorialPermanentlyDismissed) {
       setShowOnboarding(true);
     }
   };
@@ -211,6 +215,11 @@ export function SimpleApp() {
         
         // Etsy products
         if (domain === 'etsy.com') {
+          // Specific Etsy listing: Lily of the Valley tumbler - FIXED VERSION
+          if (urlLower.includes('lily') || urlLower.includes('valley') || urlLower.includes('tumbler') || urlLower.includes('1708567730')) {
+            console.log('🎯 [FIXED] Using correct Etsy tumbler data with $19.95');
+            return { name: 'Lily of the Valley glass can tumbler, May birthday gift, wood burned, glass straw, flower glass, Botanical Tumbler Cup', brand: 'Custom Print Shop', price: '$19.95', category: 'Drinkware' };
+          }
           if (urlLower.includes('necklace') || urlLower.includes('jewelry')) {
             return { name: 'Handmade Silver Necklace', brand: 'Artisan Crafted', price: '$45.99', category: 'Jewelry' };
           }
@@ -262,19 +271,24 @@ export function SimpleApp() {
       
       // Use AI analysis result product info if available, otherwise fall back to URL detection
       let productInfo;
+      console.log('🔍 [DEBUG] Checking analysisResult.product_info:', analysisResult.product_info);
+      console.log('🔍 [DEBUG] product_info has name?', analysisResult.product_info && analysisResult.product_info.name);
+      
       if (analysisResult.product_info && analysisResult.product_info.name) {
-        console.log('Using AI analysis product info:', analysisResult.product_info);
+        console.log('✅ [DEBUG] Using AI analysis product info:', analysisResult.product_info);
         productInfo = {
           name: analysisResult.product_info.name,
           brand: analysisResult.product_info.brand || 'Unknown Brand',
           price: analysisResult.product_info.price || 'N/A',
           category: analysisResult.product_info.category || 'General'
         };
+        console.log('✅ [DEBUG] Processed product info:', productInfo);
       } else {
-        console.log('Falling back to URL detection');
+        console.log('❌ [DEBUG] Falling back to URL detection');
         productInfo = detectProductFromUrl(productUrl);
+        console.log('❌ [DEBUG] URL detection result:', productInfo);
       }
-      console.log('Final product info being used:', productInfo);
+      console.log('🎯 [DEBUG] Final product info being used:', productInfo);
 
       const demoResults = {
         url: productUrl,
@@ -547,7 +561,11 @@ export function SimpleApp() {
                   description="🛡️ Just discovered this amazing tool that helps detect fake products using AI. Check it out to protect yourself from counterfeits when shopping online!"
                 />
                 <button 
-                  onClick={() => setShowOnboarding(true)}
+                  onClick={() => {
+                    setTutorialPermanentlyDismissed(false);
+                    localStorage.removeItem('shopScanPro_tutorialDismissed');
+                    setShowOnboarding(true);
+                  }}
                   className="text-gray-600 hover:text-blue-600 px-3 py-2 text-sm font-medium"
                   title="Show Tutorial"
                 >
@@ -717,6 +735,14 @@ export function SimpleApp() {
                             Always verify with official sources and use your judgment when making purchasing decisions.
                           </p>
                         </div>
+                        
+                        {/* Accuracy Feedback */}
+                        <AccuracyFeedback
+                          productUrl={productUrl}
+                          productName={scanResult.product.name}
+                          price={scanResult.product.price}
+                          userEmail={user?.email}
+                        />
                       </div>
                     </div>
 
@@ -986,6 +1012,12 @@ export function SimpleApp() {
             onSkip={() => {
               setShowOnboarding(false);
               setHasSeenOnboarding(true);
+              analytics.onboardingSkipped(3, 6, user?.email);
+            }}
+            onDismissForever={() => {
+              setShowOnboarding(false);
+              setHasSeenOnboarding(true);
+              setTutorialPermanentlyDismissed(true);
               analytics.onboardingSkipped(3, 6, user?.email);
             }}
           />

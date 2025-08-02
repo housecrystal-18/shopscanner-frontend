@@ -4,6 +4,7 @@ import { X, ArrowRight, ArrowLeft, ScanLine, Shield, TrendingUp, Check, Camera, 
 interface OnboardingTutorialProps {
   onComplete: () => void;
   onSkip: () => void;
+  onDismissForever?: () => void;
 }
 
 interface TutorialStep {
@@ -17,9 +18,10 @@ interface TutorialStep {
   };
 }
 
-export function OnboardingTutorial({ onComplete, onSkip }: OnboardingTutorialProps) {
+export function OnboardingTutorial({ onComplete, onSkip, onDismissForever }: OnboardingTutorialProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [showOverlay, setShowOverlay] = useState(true);
+  const [showDismissOptions, setShowDismissOptions] = useState(false);
 
   const tutorialSteps: TutorialStep[] = [
     {
@@ -101,6 +103,19 @@ export function OnboardingTutorial({ onComplete, onSkip }: OnboardingTutorialPro
     if (currentStep > 0) {
       setCurrentStep(currentStep - 1);
     }
+  };
+
+  const handleDismissForever = () => {
+    localStorage.setItem('shopScanPro_tutorialDismissed', 'true');
+    if (onDismissForever) {
+      onDismissForever();
+    } else {
+      onSkip();
+    }
+  };
+
+  const handleSkipClick = () => {
+    setShowDismissOptions(true);
   };
 
   const renderExample = () => {
@@ -205,7 +220,7 @@ export function OnboardingTutorial({ onComplete, onSkip }: OnboardingTutorialPro
             </span>
           </div>
           <button
-            onClick={onSkip}
+            onClick={handleSkipClick}
             className="text-gray-400 hover:text-gray-600"
           >
             <X className="w-5 h-5" />
@@ -265,37 +280,70 @@ export function OnboardingTutorial({ onComplete, onSkip }: OnboardingTutorialPro
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between p-6 border-t bg-gray-50">
-          <button
-            onClick={onSkip}
-            className="text-gray-500 hover:text-gray-700 text-sm font-medium"
-          >
-            Skip Tutorial
-          </button>
-          
-          <div className="flex items-center space-x-3">
-            {currentStep > 0 && (
+        <div className="p-6 border-t bg-gray-50">
+          {showDismissOptions ? (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h4 className="font-medium text-gray-900 mb-2">Skip Tutorial?</h4>
+                <p className="text-sm text-gray-600 mb-4">
+                  You can always access the tutorial later by clicking the "?" button in the header.
+                </p>
+              </div>
+              <div className="flex flex-col space-y-2">
+                <button
+                  onClick={onSkip}
+                  className="w-full px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 font-medium"
+                >
+                  Skip for now
+                </button>
+                <button
+                  onClick={handleDismissForever}
+                  className="w-full px-4 py-2 text-red-700 bg-red-50 rounded-lg hover:bg-red-100 font-medium"
+                >
+                  Don't show this again
+                </button>
+                <button
+                  onClick={() => setShowDismissOptions(false)}
+                  className="w-full px-4 py-2 text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 font-medium"
+                >
+                  Continue tutorial
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center justify-between">
               <button
-                onClick={prevStep}
-                className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800"
+                onClick={handleSkipClick}
+                className="text-gray-500 hover:text-gray-700 text-sm font-medium"
               >
-                <ArrowLeft className="w-4 h-4" />
-                <span>Previous</span>
+                Skip Tutorial
               </button>
-            )}
-            
-            <button
-              onClick={nextStep}
-              className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-            >
-              <span>{currentStep === tutorialSteps.length - 1 ? 'Get Started' : 'Next'}</span>
-              {currentStep === tutorialSteps.length - 1 ? (
-                <Check className="w-4 h-4" />
-              ) : (
-                <ArrowRight className="w-4 h-4" />
-              )}
-            </button>
-          </div>
+              
+              <div className="flex items-center space-x-3">
+                {currentStep > 0 && (
+                  <button
+                    onClick={prevStep}
+                    className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    <span>Previous</span>
+                  </button>
+                )}
+                
+                <button
+                  onClick={nextStep}
+                  className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  <span>{currentStep === tutorialSteps.length - 1 ? 'Get Started' : 'Next'}</span>
+                  {currentStep === tutorialSteps.length - 1 ? (
+                    <Check className="w-4 h-4" />
+                  ) : (
+                    <ArrowRight className="w-4 h-4" />
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -372,4 +420,14 @@ export function FeatureTutorial({
       </div>
     </div>
   );
+}
+
+// Utility function to check if tutorial is permanently dismissed
+export function isTutorialDismissed(): boolean {
+  return localStorage.getItem('shopScanPro_tutorialDismissed') === 'true';
+}
+
+// Utility function to reset tutorial dismissal (for debugging or user preference reset)
+export function resetTutorialDismissal(): void {
+  localStorage.removeItem('shopScanPro_tutorialDismissed');
 }
