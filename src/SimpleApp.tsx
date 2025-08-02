@@ -260,7 +260,21 @@ export function SimpleApp() {
         return { name: 'Product Item', brand: 'Brand Name', price: '$29.99', category: 'General' };
       };
       
-      const detectedProduct = detectProductFromUrl(productUrl);
+      // Use AI analysis result product info if available, otherwise fall back to URL detection
+      let productInfo;
+      if (analysisResult.product_info && analysisResult.product_info.name) {
+        console.log('Using AI analysis product info:', analysisResult.product_info);
+        productInfo = {
+          name: analysisResult.product_info.name,
+          brand: analysisResult.product_info.brand || 'Unknown Brand',
+          price: analysisResult.product_info.price || 'N/A',
+          category: analysisResult.product_info.category || 'General'
+        };
+      } else {
+        console.log('Falling back to URL detection');
+        productInfo = detectProductFromUrl(productUrl);
+      }
+      console.log('Final product info being used:', productInfo);
 
       const demoResults = {
         url: productUrl,
@@ -284,11 +298,11 @@ export function SimpleApp() {
           }
         },
         product: {
-          name: detectedProduct.name,
-          brand: detectedProduct.brand,
-          price: detectedProduct.price,
+          name: productInfo.name,
+          brand: productInfo.brand,
+          price: productInfo.price,
           store: domain,
-          category: detectedProduct.category
+          category: productInfo.category
         },
         analysis: {
           storeReputation: storeReputation,

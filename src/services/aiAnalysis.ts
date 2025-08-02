@@ -36,8 +36,14 @@ export interface AIAnalysisResult {
     category?: string;
     official_images?: string[];
     msrp?: number;
+    price?: string;
     description?: string;
     error?: string;
+    seller?: string;
+    rating?: number;
+    reviewCount?: number;
+    availability?: string;
+    images?: string[];
   };
 }
 
