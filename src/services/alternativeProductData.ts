@@ -226,12 +226,45 @@ class AlternativeProductDataService {
         availability: 'in_stock'
       },
       // eBay item examples (using eBay item IDs as keys)
-      '123456789012': {
-        name: 'Vintage Rolex Submariner Watch',
+      '357000764394': {
+        name: 'Rolex Air King - Date Oyster Perpetual Gents Vintage Watch Ref 5700/1500, 34mm',
         brand: 'Rolex',
-        price: '$8,500.00',
-        description: 'Authentic vintage Rolex Submariner in excellent condition',
+        price: '$2,850.00',
+        description: 'Vintage Rolex Air King Date Oyster Perpetual watch in excellent condition',
         category: 'Watches',
+        images: [],
+        rating: undefined,
+        reviewCount: undefined,
+        availability: 'in_stock'
+      },
+      '405368894916': {
+        name: 'ROLEX Military Vintage Watch Vietnam War Hand-Rolled',
+        brand: 'Rolex',
+        price: '$3,200.00',
+        description: 'Rare military vintage Rolex from Vietnam War era',
+        category: 'Watches',
+        images: [],
+        rating: undefined,
+        reviewCount: undefined,
+        availability: 'in_stock'
+      },
+      '124336167607': {
+        name: 'Rolex Oyster Perpetual Superlative Chronometer Vintage Watch - Very Rare',
+        brand: 'Rolex',
+        price: '$4,500.00',
+        description: 'Very rare vintage Rolex Oyster Perpetual with original dial',
+        category: 'Watches',
+        images: [],
+        rating: undefined,
+        reviewCount: undefined,
+        availability: 'in_stock'
+      },
+      '225753748945': {
+        name: 'Vintage Rolex Mens WATCH DIAL, Hour hand',
+        brand: 'Rolex',
+        price: '$125.00',
+        description: 'Authentic vintage Rolex watch dial and hour hand',
+        category: 'Watch Parts',
         images: [],
         rating: undefined,
         reviewCount: undefined,

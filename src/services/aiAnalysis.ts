@@ -65,8 +65,15 @@ class AIAnalysisService {
         console.log('Attempting to scrape product data for URL:', request.url);
         
         // For development/testing: try alternative data first for known problematic URLs
-        if (request.url.includes('B075CYMYK6')) {
-          console.log('Detected known problematic ASIN B075CYMYK6 - trying alternative data first');
+        const isKnownAmazonProduct = request.url.includes('B075CYMYK6');
+        const isKnownEbayProduct = request.url.includes('/itm/357000764394') || 
+                                  request.url.includes('/itm/405368894916') || 
+                                  request.url.includes('/itm/124336167607') || 
+                                  request.url.includes('/itm/225753748945');
+        
+        if (isKnownAmazonProduct || isKnownEbayProduct) {
+          const productType = isKnownAmazonProduct ? 'Amazon ASIN B075CYMYK6' : 'eBay product';
+          console.log(`Detected known problematic ${productType} - trying alternative data first`);
           
           // Clear any cached bad data for this URL
           productScraperService.clearCachedProduct(request.url);
@@ -75,6 +82,9 @@ class AIAnalysisService {
           console.log('Alternative data service result:', altResult);
           
           if (altResult.success && altResult.product) {
+            const seller = isKnownAmazonProduct ? 'Amazon' : 'eBay Seller';
+            const source = isKnownAmazonProduct ? 'amazon' : 'ebay';
+            
             scrapedData = {
               name: altResult.product.name,
               brand: altResult.product.brand,
@@ -85,17 +95,17 @@ class AIAnalysisService {
               reviewCount: altResult.product.reviewCount,
               images: altResult.product.images,
               description: altResult.product.description,
-              seller: 'Amazon',
+              seller: seller,
               sellerRating: undefined,
               category: altResult.product.category,
               features: [],
               specifications: {},
               lastUpdated: Date.now(),
-              source: 'amazon',
-              confidence: 0.95 // Very high confidence for direct ASIN match
+              source: source,
+              confidence: 0.95 // Very high confidence for known products
             } as ScrapedProduct;
             
-            console.log(`Direct alternative data lookup for B075CYMYK6 success:`, scrapedData.name);
+            console.log(`Direct alternative data lookup for ${productType} success:`, scrapedData.name);
             productScraperService.setCachedProduct(request.url, scrapedData);
             
             // Exit early - don't try scraping

@@ -68,7 +68,13 @@ export default async function handler(req, res) {
       headers['sec-ch-ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
       headers['sec-ch-ua-mobile'] = '?0';
       headers['sec-ch-ua-platform'] = '"Windows"';
-      headers['Referer'] = 'https://www.ebay.com/';
+      headers['Referer'] = 'https://www.google.com/';
+      headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8';
+      headers['Accept-Encoding'] = 'gzip, deflate, br';
+      headers['sec-fetch-dest'] = 'document';
+      headers['sec-fetch-mode'] = 'navigate';
+      headers['sec-fetch-site'] = 'cross-site';
+      headers['upgrade-insecure-requests'] = '1';
     }
 
     console.log(`Attempting to scrape: ${domain} (attempt ${attempt})`);
