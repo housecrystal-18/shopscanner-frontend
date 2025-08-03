@@ -15,7 +15,7 @@ export interface ScrapedProduct {
   features: string[];
   specifications: { [key: string]: string };
   lastUpdated: number;
-  source: 'amazon' | 'ebay' | 'etsy' | 'other';
+  source: 'amazon' | 'ebay' | 'etsy' | 'walmart' | 'target' | 'bestbuy' | 'facebook_marketplace' | 'mercari' | 'depop' | 'poshmark' | 'aliexpress' | 'shopify' | 'other';
   confidence: number; // How confident we are in the data accuracy
 }
 
@@ -141,7 +141,28 @@ class ProductScraperService {
           return await this.scrapeEbay(url);
         case 'etsy.com':
           return await this.scrapeEtsy(url);
+        case 'walmart.com':
+          return await this.scrapeWalmart(url);
+        case 'target.com':
+          return await this.scrapeTarget(url);
+        case 'bestbuy.com':
+          return await this.scrapeBestBuy(url);
+        case 'facebook.com':
+        case 'marketplace.facebook.com':
+          return await this.scrapeFacebookMarketplace(url);
+        case 'mercari.com':
+          return await this.scrapeMercari(url);
+        case 'depop.com':
+          return await this.scrapeDepop(url);
+        case 'poshmark.com':
+          return await this.scrapePoshmark(url);
+        case 'aliexpress.com':
+          return await this.scrapeAliExpress(url);
         default:
+          // Check if it's a Shopify store
+          if (await this.isShopifyStore(url)) {
+            return await this.scrapeShopify(url);
+          }
           return await this.scrapeGeneric(url);
       }
     } catch (error) {
@@ -563,6 +584,275 @@ class ProductScraperService {
         error: error instanceof Error ? error.message : 'Etsy scraping failed',
         blocked: error instanceof Error && error.message.includes('blocked')
       };
+    }
+  }
+
+  private async scrapeWalmart(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      console.log(`Walmart HTML received: ${html.length} characters`);
+      
+      const product: ScrapedProduct = {
+        name: this.extractWalmartTitle(html),
+        brand: this.extractWalmartBrand(html),
+        price: this.extractWalmartPrice(html),
+        originalPrice: this.extractWalmartOriginalPrice(html),
+        availability: this.extractWalmartAvailability(html),
+        rating: this.extractWalmartRating(html),
+        reviewCount: this.extractWalmartReviewCount(html),
+        images: this.extractWalmartImages(html),
+        description: this.extractWalmartDescription(html),
+        seller: this.extractWalmartSeller(html),
+        sellerRating: this.extractWalmartSellerRating(html),
+        category: this.extractWalmartCategory(html),
+        features: this.extractWalmartFeatures(html),
+        specifications: this.extractWalmartSpecs(html),
+        lastUpdated: Date.now(),
+        source: 'walmart',
+        confidence: this.calculateConfidence(html, 'walmart')
+      };
+
+      return { success: true, product };
+    } catch (error) {
+      console.error('Walmart scraping failed:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Walmart scraping failed',
+        blocked: error instanceof Error && error.message.includes('blocked')
+      };
+    }
+  }
+
+  private async scrapeTarget(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractTargetTitle(html),
+        brand: this.extractTargetBrand(html),
+        price: this.extractTargetPrice(html),
+        originalPrice: this.extractTargetOriginalPrice(html),
+        availability: this.extractTargetAvailability(html),
+        rating: this.extractTargetRating(html),
+        reviewCount: this.extractTargetReviewCount(html),
+        images: this.extractTargetImages(html),
+        description: this.extractTargetDescription(html),
+        seller: 'Target',
+        sellerRating: undefined,
+        category: this.extractTargetCategory(html),
+        features: this.extractTargetFeatures(html),
+        specifications: this.extractTargetSpecs(html),
+        lastUpdated: Date.now(),
+        source: 'target',
+        confidence: this.calculateConfidence(html, 'target')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'Target scraping failed' };
+    }
+  }
+
+  private async scrapeBestBuy(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractBestBuyTitle(html),
+        brand: this.extractBestBuyBrand(html),
+        price: this.extractBestBuyPrice(html),
+        originalPrice: this.extractBestBuyOriginalPrice(html),
+        availability: this.extractBestBuyAvailability(html),
+        rating: this.extractBestBuyRating(html),
+        reviewCount: this.extractBestBuyReviewCount(html),
+        images: this.extractBestBuyImages(html),
+        description: this.extractBestBuyDescription(html),
+        seller: 'Best Buy',
+        sellerRating: undefined,
+        category: this.extractBestBuyCategory(html),
+        features: this.extractBestBuyFeatures(html),
+        specifications: this.extractBestBuySpecs(html),
+        lastUpdated: Date.now(),
+        source: 'bestbuy',
+        confidence: this.calculateConfidence(html, 'bestbuy')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'Best Buy scraping failed' };
+    }
+  }
+
+  private async scrapeFacebookMarketplace(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractFacebookTitle(html),
+        brand: this.extractFacebookBrand(html),
+        price: this.extractFacebookPrice(html),
+        originalPrice: undefined,
+        availability: this.extractFacebookAvailability(html),
+        rating: undefined,
+        reviewCount: undefined,
+        images: this.extractFacebookImages(html),
+        description: this.extractFacebookDescription(html),
+        seller: this.extractFacebookSeller(html),
+        sellerRating: this.extractFacebookSellerRating(html),
+        category: this.extractFacebookCategory(html),
+        features: [],
+        specifications: {},
+        lastUpdated: Date.now(),
+        source: 'facebook_marketplace',
+        confidence: this.calculateConfidence(html, 'facebook')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'Facebook Marketplace scraping failed' };
+    }
+  }
+
+  private async scrapeMercari(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractMercariTitle(html),
+        brand: this.extractMercariBrand(html),
+        price: this.extractMercariPrice(html),
+        originalPrice: this.extractMercariOriginalPrice(html),
+        availability: this.extractMercariAvailability(html),
+        rating: undefined,
+        reviewCount: undefined,
+        images: this.extractMercariImages(html),
+        description: this.extractMercariDescription(html),
+        seller: this.extractMercariSeller(html),
+        sellerRating: this.extractMercariSellerRating(html),
+        category: this.extractMercariCategory(html),
+        features: [],
+        specifications: {},
+        lastUpdated: Date.now(),
+        source: 'mercari',
+        confidence: this.calculateConfidence(html, 'mercari')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'Mercari scraping failed' };
+    }
+  }
+
+  private async scrapeDepop(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractDepopTitle(html),
+        brand: this.extractDepopBrand(html),
+        price: this.extractDepopPrice(html),
+        originalPrice: this.extractDepopOriginalPrice(html),
+        availability: this.extractDepopAvailability(html),
+        rating: undefined,
+        reviewCount: undefined,
+        images: this.extractDepopImages(html),
+        description: this.extractDepopDescription(html),
+        seller: this.extractDepopSeller(html),
+        sellerRating: undefined,
+        category: 'Fashion',
+        features: [],
+        specifications: {},
+        lastUpdated: Date.now(),
+        source: 'depop',
+        confidence: this.calculateConfidence(html, 'depop')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'Depop scraping failed' };
+    }
+  }
+
+  private async scrapePoshmark(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractPoshmarkTitle(html),
+        brand: this.extractPoshmarkBrand(html),
+        price: this.extractPoshmarkPrice(html),
+        originalPrice: this.extractPoshmarkOriginalPrice(html),
+        availability: this.extractPoshmarkAvailability(html),
+        rating: undefined,
+        reviewCount: undefined,
+        images: this.extractPoshmarkImages(html),
+        description: this.extractPoshmarkDescription(html),
+        seller: this.extractPoshmarkSeller(html),
+        sellerRating: undefined,
+        category: 'Fashion',
+        features: [],
+        specifications: {},
+        lastUpdated: Date.now(),
+        source: 'poshmark',
+        confidence: this.calculateConfidence(html, 'poshmark')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'Poshmark scraping failed' };
+    }
+  }
+
+  private async scrapeAliExpress(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractAliExpressTitle(html),
+        brand: this.extractAliExpressBrand(html),
+        price: this.extractAliExpressPrice(html),
+        originalPrice: this.extractAliExpressOriginalPrice(html),
+        availability: this.extractAliExpressAvailability(html),
+        rating: this.extractAliExpressRating(html),
+        reviewCount: this.extractAliExpressReviewCount(html),
+        images: this.extractAliExpressImages(html),
+        description: this.extractAliExpressDescription(html),
+        seller: this.extractAliExpressSeller(html),
+        sellerRating: this.extractAliExpressSellerRating(html),
+        category: this.extractAliExpressCategory(html),
+        features: [],
+        specifications: {},
+        lastUpdated: Date.now(),
+        source: 'aliexpress',
+        confidence: this.calculateConfidence(html, 'aliexpress')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'AliExpress scraping failed' };
+    }
+  }
+
+  private async scrapeShopify(url: string): Promise<ScrapingResult> {
+    try {
+      const html = await this.makeRequest(url);
+      const product: ScrapedProduct = {
+        name: this.extractShopifyTitle(html),
+        brand: this.extractShopifyBrand(html),
+        price: this.extractShopifyPrice(html),
+        originalPrice: this.extractShopifyOriginalPrice(html),
+        availability: this.extractShopifyAvailability(html),
+        rating: undefined,
+        reviewCount: undefined,
+        images: this.extractShopifyImages(html),
+        description: this.extractShopifyDescription(html),
+        seller: this.extractShopifyShopName(html),
+        sellerRating: undefined,
+        category: this.extractShopifyCategory(html),
+        features: [],
+        specifications: {},
+        lastUpdated: Date.now(),
+        source: 'shopify',
+        confidence: this.calculateConfidence(html, 'shopify')
+      };
+      return { success: true, product };
+    } catch (error) {
+      return { success: false, error: 'Shopify scraping failed' };
+    }
+  }
+
+  private async isShopifyStore(url: string): Promise<boolean> {
+    try {
+      const html = await this.makeRequest(url);
+      return html.includes('Shopify') || html.includes('shopify-section') || html.includes('shopify.js');
+    } catch {
+      return false;
     }
   }
 
@@ -1296,6 +1586,397 @@ class ProductScraperService {
     
     return specs;
   }
+
+  // Walmart extraction methods
+  private extractWalmartTitle(html: string): string {
+    const patterns = [
+      /"@type":"Product"[^}]*"name":"([^"]+)"/i,
+      /<h1[^>]*data-automation-id="product-title"[^>]*>([^<]+)<\/h1>/i,
+      /<h1[^>]*class="[^"]*prod.name[^"]*"[^>]*>([^<]+)<\/h1>/i,
+      /<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i,
+      /<title>([^|<]+)[\|<]/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Walmart Product');
+  }
+
+  private extractWalmartPrice(html: string): string {
+    const patterns = [
+      /"@type":"Offer"[^}]*"price":"([^"]+)"/i,
+      /data-automation-id="product-price"[^>]*>.*?\$([0-9,]+\.?\d*)/i,
+      /<span[^>]*class="[^"]*price-current[^"]*"[^>]*>.*?\$([0-9,]+\.?\d*)/i,
+      /\$([0-9,]+\.?\d*)/i
+    ];
+    const price = this.extractWithPatterns(html, patterns, '0.00');
+    return price.startsWith('$') ? price : `$${price}`;
+  }
+
+  private extractWalmartBrand(html: string): string {
+    const patterns = [
+      /"brand":\{"name":"([^"]+)"/i,
+      /<span[^>]*class="[^"]*brand[^"]*"[^>]*>([^<]+)<\/span>/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Walmart');
+  }
+
+  private extractWalmartOriginalPrice(html: string): string | undefined {
+    const patterns = [
+      /<span[^>]*class="[^"]*price-was[^"]*"[^>]*>.*?\$([0-9,]+\.?\d*)/i,
+      /was\s*\$([0-9,]+\.?\d*)/i
+    ];
+    const price = this.extractWithPatterns(html, patterns, '');
+    return price ? (price.startsWith('$') ? price : `$${price}`) : undefined;
+  }
+
+  private extractWalmartAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' {
+    if (html.includes('out of stock') || html.includes('unavailable')) return 'out_of_stock';
+    if (html.includes('in stock') || html.includes('add to cart')) return 'in_stock';
+    return 'unknown';
+  }
+
+  private extractWalmartRating(html: string): number | undefined {
+    const patterns = [
+      /"ratingValue":"([0-9.]+)"/i,
+      /data-testid="reviews-summary"[^>]*>.*?([0-9.]+)/i
+    ];
+    const rating = this.extractWithPatterns(html, patterns, '');
+    return rating ? parseFloat(rating) : undefined;
+  }
+
+  private extractWalmartReviewCount(html: string): number | undefined {
+    const patterns = [
+      /"reviewCount":"([0-9,]+)"/i,
+      /\(([0-9,]+)\s*reviews?\)/i
+    ];
+    const count = this.extractWithPatterns(html, patterns, '');
+    return count ? parseInt(count.replace(/,/g, '')) : undefined;
+  }
+
+  private extractWalmartImages(html: string): string[] {
+    const patterns = [
+      /"image":\["([^"]+)"/i,
+      /<img[^>]*src="([^"]*product[^"]*)"[^>]*>/gi
+    ];
+    return this.extractArrayWithPatterns(html, patterns);
+  }
+
+  private extractWalmartDescription(html: string): string {
+    const patterns = [
+      /"description":"([^"]+)"/i,
+      /<div[^>]*class="[^"]*product-description[^"]*"[^>]*>([^<]+)<\/div>/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Walmart product');
+  }
+
+  private extractWalmartSeller(html: string): string {
+    const patterns = [
+      /"seller":\{"name":"([^"]+)"/i,
+      /sold by\s*([^<\n]+)/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Walmart');
+  }
+
+  private extractWalmartSellerRating(html: string): number | undefined {
+    return undefined; // Walmart doesn't typically show seller ratings for their own products
+  }
+
+  private extractWalmartCategory(html: string): string {
+    const patterns = [
+      /"category":"([^"]+)"/i,
+      /<nav[^>]*class="[^"]*breadcrumb[^"]*"[^>]*>.*?>([^<]+)<\/a>[^<]*<\/nav>/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'General');
+  }
+
+  private extractWalmartFeatures(html: string): string[] {
+    const patterns = [
+      /<li[^>]*class="[^"]*feature[^"]*"[^>]*>([^<]+)<\/li>/gi,
+      /<div[^>]*class="[^"]*bullet[^"]*"[^>]*>([^<]+)<\/div>/gi
+    ];
+    return this.extractArrayWithPatterns(html, patterns);
+  }
+
+  private extractWalmartSpecs(html: string): { [key: string]: string } {
+    const specs: { [key: string]: string } = {};
+    const specPattern = /<tr[^>]*>.*?<td[^>]*>([^<]+)<\/td>.*?<td[^>]*>([^<]+)<\/td>.*?<\/tr>/gi;
+    let match;
+    while ((match = specPattern.exec(html)) !== null) {
+      if (match[1] && match[2]) {
+        specs[this.cleanText(match[1])] = this.cleanText(match[2]);
+      }
+    }
+    return specs;
+  }
+
+  // Target extraction methods
+  private extractTargetTitle(html: string): string {
+    const patterns = [
+      /<h1[^>]*data-test="product-title"[^>]*>([^<]+)<\/h1>/i,
+      /"@type":"Product"[^}]*"name":"([^"]+)"/i,
+      /<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Target Product');
+  }
+
+  private extractTargetPrice(html: string): string {
+    const patterns = [
+      /data-test="product-price"[^>]*>\$([0-9,]+\.?\d*)/i,
+      /"price":"([^"]+)"/i,
+      /\$([0-9,]+\.?\d*)/i
+    ];
+    const price = this.extractWithPatterns(html, patterns, '0.00');
+    return price.startsWith('$') ? price : `$${price}`;
+  }
+
+  private extractTargetBrand(html: string): string {
+    const patterns = [
+      /<a[^>]*data-test="product-brand"[^>]*>([^<]+)<\/a>/i,
+      /"brand":\{"name":"([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Target');
+  }
+
+  private extractTargetOriginalPrice(html: string): string | undefined {
+    const patterns = [
+      /reg\s*\$([0-9,]+\.?\d*)/i,
+      /was\s*\$([0-9,]+\.?\d*)/i
+    ];
+    const price = this.extractWithPatterns(html, patterns, '');
+    return price ? `$${price}` : undefined;
+  }
+
+  private extractTargetAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' {
+    if (html.includes('out of stock') || html.includes('sold out')) return 'out_of_stock';
+    if (html.includes('add to cart') || html.includes('in stock')) return 'in_stock';
+    return 'unknown';
+  }
+
+  private extractTargetRating(html: string): number | undefined {
+    const patterns = [
+      /"ratingValue":"([0-9.]+)"/i,
+      /data-test="rating-[0-9]+"[^>]*>([0-9.]+)/i
+    ];
+    const rating = this.extractWithPatterns(html, patterns, '');
+    return rating ? parseFloat(rating) : undefined;
+  }
+
+  private extractTargetReviewCount(html: string): number | undefined {
+    const patterns = [
+      /\(([0-9,]+)\)/i,
+      /"reviewCount":"([0-9,]+)"/i
+    ];
+    const count = this.extractWithPatterns(html, patterns, '');
+    return count ? parseInt(count.replace(/,/g, '')) : undefined;
+  }
+
+  private extractTargetImages(html: string): string[] {
+    const patterns = [
+      /<img[^>]*src="([^"]*product[^"]*)"[^>]*>/gi,
+      /"image":\["([^"]+)"/i
+    ];
+    return this.extractArrayWithPatterns(html, patterns);
+  }
+
+  private extractTargetDescription(html: string): string {
+    const patterns = [
+      /<div[^>]*data-test="item-details-description"[^>]*>([^<]+)<\/div>/i,
+      /"description":"([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Target product');
+  }
+
+  private extractTargetCategory(html: string): string {
+    const patterns = [
+      /<nav[^>]*data-test="breadcrumb"[^>]*>.*?>([^<]+)<\/a>[^<]*<\/nav>/i,
+      /"category":"([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'General');
+  }
+
+  private extractTargetFeatures(html: string): string[] {
+    const patterns = [
+      /<li[^>]*data-test="item-details-feature"[^>]*>([^<]+)<\/li>/gi
+    ];
+    return this.extractArrayWithPatterns(html, patterns);
+  }
+
+  private extractTargetSpecs(html: string): { [key: string]: string } {
+    const specs: { [key: string]: string } = {};
+    const specPattern = /<dt[^>]*>([^<]+)<\/dt>.*?<dd[^>]*>([^<]+)<\/dd>/gi;
+    let match;
+    while ((match = specPattern.exec(html)) !== null) {
+      if (match[1] && match[2]) {
+        specs[this.cleanText(match[1])] = this.cleanText(match[2]);
+      }
+    }
+    return specs;
+  }
+
+  // Best Buy extraction methods
+  private extractBestBuyTitle(html: string): string {
+    const patterns = [
+      /<h1[^>]*class="sr-only"[^>]*>([^<]+)<\/h1>/i,
+      /"@type":"Product"[^}]*"name":"([^"]+)"/i,
+      /<meta[^>]*property="og:title"[^>]*content="([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Best Buy Product');
+  }
+
+  private extractBestBuyPrice(html: string): string {
+    const patterns = [
+      /<span[^>]*class="sr-only"[^>]*>current price \$([0-9,]+\.?\d*)/i,
+      /"price":"([^"]+)"/i,
+      /\$([0-9,]+\.?\d*)/i
+    ];
+    const price = this.extractWithPatterns(html, patterns, '0.00');
+    return price.startsWith('$') ? price : `$${price}`;
+  }
+
+  private extractBestBuyBrand(html: string): string {
+    const patterns = [
+      /<a[^>]*class="[^"]*product-data-value[^"]*"[^>]*>([^<]+)<\/a>/i,
+      /"brand":"([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Best Buy');
+  }
+
+  private extractBestBuyOriginalPrice(html: string): string | undefined {
+    const patterns = [
+      /was\s*\$([0-9,]+\.?\d*)/i,
+      /<span[^>]*class="[^"]*pricing-price-details[^"]*"[^>]*>\$([0-9,]+\.?\d*)/i
+    ];
+    const price = this.extractWithPatterns(html, patterns, '');
+    return price ? `$${price}` : undefined;
+  }
+
+  private extractBestBuyAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' {
+    if (html.includes('sold out') || html.includes('unavailable')) return 'out_of_stock';
+    if (html.includes('add to cart') || html.includes('in stock')) return 'in_stock';
+    return 'unknown';
+  }
+
+  private extractBestBuyRating(html: string): number | undefined {
+    const patterns = [
+      /"ratingValue":"([0-9.]+)"/i,
+      /([0-9.]+) out of 5 stars/i
+    ];
+    const rating = this.extractWithPatterns(html, patterns, '');
+    return rating ? parseFloat(rating) : undefined;
+  }
+
+  private extractBestBuyReviewCount(html: string): number | undefined {
+    const patterns = [
+      /\(([0-9,]+)\s*reviews?\)/i,
+      /"reviewCount":"([0-9,]+)"/i
+    ];
+    const count = this.extractWithPatterns(html, patterns, '');
+    return count ? parseInt(count.replace(/,/g, '')) : undefined;
+  }
+
+  private extractBestBuyImages(html: string): string[] {
+    const patterns = [
+      /<img[^>]*src="([^"]*product[^"]*)"[^>]*>/gi,
+      /"image":\["([^"]+)"/i
+    ];
+    return this.extractArrayWithPatterns(html, patterns);
+  }
+
+  private extractBestBuyDescription(html: string): string {
+    const patterns = [
+      /<div[^>]*class="[^"]*product-details[^"]*"[^>]*>([^<]+)<\/div>/i,
+      /"description":"([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Best Buy product');
+  }
+
+  private extractBestBuyCategory(html: string): string {
+    const patterns = [
+      /<nav[^>]*class="[^"]*breadcrumb[^"]*"[^>]*>.*?>([^<]+)<\/a>[^<]*<\/nav>/i,
+      /"category":"([^"]+)"/i
+    ];
+    return this.extractWithPatterns(html, patterns, 'Electronics');
+  }
+
+  private extractBestBuyFeatures(html: string): string[] {
+    const patterns = [
+      /<li[^>]*class="[^"]*feature[^"]*"[^>]*>([^<]+)<\/li>/gi
+    ];
+    return this.extractArrayWithPatterns(html, patterns);
+  }
+
+  private extractBestBuySpecs(html: string): { [key: string]: string } {
+    const specs: { [key: string]: string } = {};
+    const specPattern = /<dt[^>]*>([^<]+)<\/dt>.*?<dd[^>]*>([^<]+)<\/dd>/gi;
+    let match;
+    while ((match = specPattern.exec(html)) !== null) {
+      if (match[1] && match[2]) {
+        specs[this.cleanText(match[1])] = this.cleanText(match[2]);
+      }
+    }
+    return specs;
+  }
+
+  // Placeholder extraction methods for other platforms (will implement based on need)
+  private extractFacebookTitle(html: string): string { return this.extractWithPatterns(html, [/<title>([^<]+)<\/title>/i], 'Facebook Marketplace Item'); }
+  private extractFacebookPrice(html: string): string { return this.extractWithPatterns(html, [/\$([0-9,]+\.?\d*)/i], '$0.00'); }
+  private extractFacebookBrand(html: string): string { return 'Facebook Seller'; }
+  private extractFacebookAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' { return 'unknown'; }
+  private extractFacebookImages(html: string): string[] { return []; }
+  private extractFacebookDescription(html: string): string { return 'Facebook Marketplace listing'; }
+  private extractFacebookSeller(html: string): string { return 'Facebook User'; }
+  private extractFacebookSellerRating(html: string): number | undefined { return undefined; }
+  private extractFacebookCategory(html: string): string { return 'Marketplace'; }
+
+  private extractMercariTitle(html: string): string { return this.extractWithPatterns(html, [/<title>([^<]+)<\/title>/i], 'Mercari Item'); }
+  private extractMercariPrice(html: string): string { return this.extractWithPatterns(html, [/\$([0-9,]+\.?\d*)/i], '$0.00'); }
+  private extractMercariBrand(html: string): string { return 'Various'; }
+  private extractMercariOriginalPrice(html: string): string | undefined { return undefined; }
+  private extractMercariAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' { return 'unknown'; }
+  private extractMercariImages(html: string): string[] { return []; }
+  private extractMercariDescription(html: string): string { return 'Mercari listing'; }
+  private extractMercariSeller(html: string): string { return 'Mercari User'; }
+  private extractMercariSellerRating(html: string): number | undefined { return undefined; }
+  private extractMercariCategory(html: string): string { return 'General'; }
+
+  private extractDepopTitle(html: string): string { return this.extractWithPatterns(html, [/<title>([^<]+)<\/title>/i], 'Depop Item'); }
+  private extractDepopPrice(html: string): string { return this.extractWithPatterns(html, [/\$([0-9,]+\.?\d*)/i], '$0.00'); }
+  private extractDepopBrand(html: string): string { return 'Various'; }
+  private extractDepopOriginalPrice(html: string): string | undefined { return undefined; }
+  private extractDepopAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' { return 'unknown'; }
+  private extractDepopImages(html: string): string[] { return []; }
+  private extractDepopDescription(html: string): string { return 'Depop listing'; }
+  private extractDepopSeller(html: string): string { return 'Depop User'; }
+
+  private extractPoshmarkTitle(html: string): string { return this.extractWithPatterns(html, [/<title>([^<]+)<\/title>/i], 'Poshmark Item'); }
+  private extractPoshmarkPrice(html: string): string { return this.extractWithPatterns(html, [/\$([0-9,]+\.?\d*)/i], '$0.00'); }
+  private extractPoshmarkBrand(html: string): string { return 'Various'; }
+  private extractPoshmarkOriginalPrice(html: string): string | undefined { return undefined; }
+  private extractPoshmarkAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' { return 'unknown'; }
+  private extractPoshmarkImages(html: string): string[] { return []; }
+  private extractPoshmarkDescription(html: string): string { return 'Poshmark listing'; }
+  private extractPoshmarkSeller(html: string): string { return 'Poshmark User'; }
+
+  private extractAliExpressTitle(html: string): string { return this.extractWithPatterns(html, [/<title>([^<]+)<\/title>/i], 'AliExpress Item'); }
+  private extractAliExpressPrice(html: string): string { return this.extractWithPatterns(html, [/\$([0-9,]+\.?\d*)/i], '$0.00'); }
+  private extractAliExpressBrand(html: string): string { return 'Various'; }
+  private extractAliExpressOriginalPrice(html: string): string | undefined { return undefined; }
+  private extractAliExpressAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' { return 'unknown'; }
+  private extractAliExpressRating(html: string): number | undefined { return undefined; }
+  private extractAliExpressReviewCount(html: string): number | undefined { return undefined; }
+  private extractAliExpressImages(html: string): string[] { return []; }
+  private extractAliExpressDescription(html: string): string { return 'AliExpress listing'; }
+  private extractAliExpressSeller(html: string): string { return 'AliExpress Seller'; }
+  private extractAliExpressSellerRating(html: string): number | undefined { return undefined; }
+  private extractAliExpressCategory(html: string): string { return 'General'; }
+
+  private extractShopifyTitle(html: string): string { return this.extractWithPatterns(html, [/<title>([^<]+)<\/title>/i], 'Shopify Product'); }
+  private extractShopifyPrice(html: string): string { return this.extractWithPatterns(html, [/\$([0-9,]+\.?\d*)/i], '$0.00'); }
+  private extractShopifyBrand(html: string): string { return 'Shopify Store'; }
+  private extractShopifyOriginalPrice(html: string): string | undefined { return undefined; }
+  private extractShopifyAvailability(html: string): 'in_stock' | 'out_of_stock' | 'limited' | 'unknown' { return 'unknown'; }
+  private extractShopifyImages(html: string): string[] { return []; }
+  private extractShopifyDescription(html: string): string { return 'Shopify product'; }
+  private extractShopifyShopName(html: string): string { return 'Shopify Store'; }
+  private extractShopifyCategory(html: string): string { return 'General'; }
 }
 
 export const productScraperService = new ProductScraperService();

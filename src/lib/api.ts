@@ -164,16 +164,16 @@ export const authAPI = {
     type: 'consumer' | 'business';
     businessName?: string;
   }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> =>
-    config.mockApi ? Promise.resolve({ data: mockApi.auth.register(data) } as any) : api.post('/api/auth/register', data),
+    config.mockApi ? Promise.resolve({ data: mockApi.auth.register(data) } as any) : api.post('/auth/register', data),
 
   login: (data: {
     email: string;
     password: string;
   }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> =>
-    config.mockApi ? Promise.resolve({ data: mockApi.auth.login(data.email, data.password) } as any) : api.post('/api/auth/login', data),
+    config.mockApi ? Promise.resolve({ data: mockApi.auth.login(data.email, data.password) } as any) : api.post('/auth/login', data),
 
   me: (): Promise<AxiosResponse<{ success: boolean; user: User }>> =>
-    api.get('/api/auth/me'),
+    api.get('/auth/me'),
 };
 
 // Products API

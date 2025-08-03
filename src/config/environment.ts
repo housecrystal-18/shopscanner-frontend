@@ -104,8 +104,8 @@ function getEnvArray(key: string, defaultValue: string[] = []): string[] {
 
 // Environment configuration
 export const config: EnvironmentConfig = {
-  // API Configuration
-  apiBaseUrl: getEnvVar('VITE_API_URL', 'http://localhost:3001'),
+  // API Configuration  
+  apiBaseUrl: getEnvVar('VITE_API_BASE_URL', getEnvVar('VITE_API_URL', 'https://shopscanner-production.up.railway.app')),
   apiTimeout: 30000,
   
   // Authentication
@@ -113,8 +113,8 @@ export const config: EnvironmentConfig = {
   sessionTimeout: getEnvNumber('VITE_SESSION_TIMEOUT', 3600000),
   
   // Stripe
-  stripePublishableKey: 'pk_test_demo',
-  stripeWebhookSecret: '',
+  stripePublishableKey: getEnvVar('VITE_STRIPE_PUBLISHABLE_KEY', 'pk_test_demo'),
+  stripeWebhookSecret: getEnvVar('VITE_STRIPE_WEBHOOK_SECRET', ''),
   
   // Analytics
   ga4MeasurementId: getEnvVar('VITE_GA4_MEASUREMENT_ID'),
@@ -137,7 +137,7 @@ export const config: EnvironmentConfig = {
   
   // Development
   debugMode: getEnvBoolean('VITE_DEBUG_MODE', false),
-  mockApi: getEnvBoolean('VITE_MOCK_API', true),
+  mockApi: getEnvBoolean('VITE_MOCK_API', false),
   logLevel: 'info',
   
   // AWS

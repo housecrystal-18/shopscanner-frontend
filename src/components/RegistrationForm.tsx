@@ -271,17 +271,21 @@ export function RegistrationForm({ onBack, onRegister }: RegistrationFormProps) 
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                {/* Free Plan */}
+                {/* Free Trial */}
                 <div className={`border-2 rounded-xl p-6 cursor-pointer ${
                   formData.selectedPlan === 'free' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
                 }`} onClick={() => setFormData({...formData, selectedPlan: 'free'})}>
-                  <h3 className="text-lg font-semibold mb-2">Free Trial</h3>
-                  <div className="text-2xl font-bold mb-4">$0<span className="text-lg text-gray-500">/month</span></div>
-                  <ul className="space-y-2 mb-6">
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />10 scans per month</li>
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Basic authenticity analysis</li>
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Store reputation check</li>
+                  <h3 className="text-lg font-semibold mb-2">7-Day Free Trial</h3>
+                  <div className="text-2xl font-bold mb-4">$0<span className="text-lg text-gray-500"> for 7 days</span></div>
+                  <ul className="space-y-2 mb-4">
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Unlimited scans</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Full educational analysis</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Smart shopping guides</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />All premium features</li>
                   </ul>
+                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    Cancel anytime during trial. No charges if cancelled before 7 days.
+                  </div>
                 </div>
 
                 {/* Monthly Plan */}
@@ -291,12 +295,15 @@ export function RegistrationForm({ onBack, onRegister }: RegistrationFormProps) 
                   <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500 text-white px-3 py-1 rounded-full text-xs">Popular</div>
                   <h3 className="text-lg font-semibold mb-2">Monthly</h3>
                   <div className="text-2xl font-bold mb-4">$10.00<span className="text-lg text-gray-500">/month</span></div>
-                  <ul className="space-y-2 mb-6">
+                  <ul className="space-y-2 mb-4">
                     <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Unlimited scans</li>
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Advanced AI analysis</li>
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Price comparison</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Full educational analysis</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Smart shopping guides</li>
                     <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Priority support</li>
                   </ul>
+                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    Cancel anytime. Effective end of billing period. No cancellation fees.
+                  </div>
                 </div>
 
                 {/* Annual Plan */}
@@ -307,13 +314,59 @@ export function RegistrationForm({ onBack, onRegister }: RegistrationFormProps) 
                   <h3 className="text-lg font-semibold mb-2">Annual</h3>
                   <div className="text-2xl font-bold mb-1">$9.00<span className="text-lg text-gray-500">/month</span></div>
                   <div className="text-sm text-gray-500 mb-4">$108.00 billed annually</div>
-                  <ul className="space-y-2 mb-6">
+                  <ul className="space-y-2 mb-4">
                     <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Unlimited scans</li>
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Advanced AI analysis</li>
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Price comparison</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Full educational analysis</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Smart shopping guides</li>
                     <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Priority support</li>
-                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />2 months free</li>
+                    <li className="flex items-center text-sm"><Check className="h-4 w-4 text-green-500 mr-2" />Save $12/year</li>
                   </ul>
+                  <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                    Cancel anytime. Prorated refund available. No cancellation fees.
+                  </div>
+                </div>
+              </div>
+              
+              {/* Consumer Protection & Cancellation Policy */}
+              <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4">🛡️ Consumer Protection Guarantee</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                  <div>
+                    <h4 className="font-medium text-blue-800 mb-2">Easy Cancellation</h4>
+                    <ul className="space-y-1 text-blue-700">
+                      <li>• Cancel anytime with one click</li>
+                      <li>• No phone calls or hassle required</li>
+                      <li>• No cancellation fees ever</li>
+                      <li>• Immediate email confirmation</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-800 mb-2">Transparent Billing</h4>
+                    <ul className="space-y-1 text-blue-700">
+                      <li>• Clear pricing with no hidden fees</li>
+                      <li>• Email reminders before renewal</li>
+                      <li>• Detailed billing statements</li>
+                      <li>• Secure payment processing</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-800 mb-2">Refund Policy</h4>
+                    <ul className="space-y-1 text-blue-700">
+                      <li>• Full refund if cancelled during trial</li>
+                      <li>• Prorated refunds for annual plans</li>
+                      <li>• 30-day money-back guarantee</li>
+                      <li>• Fast refund processing</li>
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="font-medium text-blue-800 mb-2">Educational Service</h4>
+                    <ul className="space-y-1 text-blue-700">
+                      <li>• Learning-focused platform</li>
+                      <li>• Pattern analysis education</li>
+                      <li>• Smart shopping skill development</li>
+                      <li>• Customer education support</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -340,6 +393,14 @@ export function RegistrationForm({ onBack, onRegister }: RegistrationFormProps) 
                         {formData.selectedPlan === 'annual' ? 'billed annually' : 'billed monthly'}
                       </div>
                     </div>
+                  </div>
+                  
+                  {/* Clear Billing Terms */}
+                  <div className="mt-4 text-xs text-gray-600 space-y-1">
+                    <p>• <strong>Trial Terms:</strong> 7-day free trial, then auto-renews at selected plan rate</p>
+                    <p>• <strong>Cancellation:</strong> Cancel anytime before trial ends - no charges</p>
+                    <p>• <strong>Billing:</strong> Secure payment, detailed receipts, renewal reminders</p>
+                    <p>• <strong>Refunds:</strong> 30-day money-back guarantee, prorated annual refunds</p>
                   </div>
                 </div>
               </div>

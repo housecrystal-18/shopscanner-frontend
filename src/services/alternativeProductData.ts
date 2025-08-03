@@ -43,6 +43,66 @@ class AlternativeProductDataService {
       return etsyMatch[1];
     }
 
+    // Walmart product ID
+    const walmartMatch = url.match(/\/ip\/[^\/]+\/([0-9]+)/i);
+    if (walmartMatch) {
+      return walmartMatch[1];
+    }
+
+    // Target product ID (DPCI or TCIN)
+    const targetMatch = url.match(/\/p\/[^\/]*\/A-([0-9]+)|\/dp\/([0-9]+)|tcin=([0-9]+)/i);
+    if (targetMatch) {
+      return targetMatch[1] || targetMatch[2] || targetMatch[3];
+    }
+
+    // Best Buy SKU
+    const bestbuyMatch = url.match(/\/site\/[^\/]+\/([0-9]+)\.p|sku=([0-9]+)/i);
+    if (bestbuyMatch) {
+      return bestbuyMatch[1] || bestbuyMatch[2];
+    }
+
+    // Facebook Marketplace listing ID
+    const facebookMatch = url.match(/\/marketplace\/item\/([0-9]+)/i);
+    if (facebookMatch) {
+      return facebookMatch[1];
+    }
+
+    // Mercari item ID
+    const mercariMatch = url.match(/\/us\/item\/m([0-9]+)/i);
+    if (mercariMatch) {
+      return mercariMatch[1];
+    }
+
+    // Depop item ID
+    const depopMatch = url.match(/\/products\/([a-zA-Z0-9]+)/i);
+    if (depopMatch) {
+      return depopMatch[1];
+    }
+
+    // Poshmark listing ID
+    const poshmarkMatch = url.match(/\/listing\/([a-zA-Z0-9]+)/i);
+    if (poshmarkMatch) {
+      return poshmarkMatch[1];
+    }
+
+    // AliExpress item ID
+    const aliexpressMatch = url.match(/\/item\/([0-9]+)\.html|item=([0-9]+)/i);
+    if (aliexpressMatch) {
+      return aliexpressMatch[1] || aliexpressMatch[2];
+    }
+
+    // Shopify product ID (generic pattern)
+    const shopifyMatch = url.match(/\/products\/([a-zA-Z0-9\-_]+)|product_id=([0-9]+)/i);
+    if (shopifyMatch) {
+      return shopifyMatch[1] || shopifyMatch[2];
+    }
+
+    // Generic product ID patterns (fallback)
+    const genericMatch = url.match(/\/product\/([a-zA-Z0-9\-_]+)|\/p\/([a-zA-Z0-9\-_]+)|product_id=([a-zA-Z0-9\-_]+)/i);
+    if (genericMatch) {
+      return genericMatch[1] || genericMatch[2] || genericMatch[3];
+    }
+
     return null;
   }
 
@@ -341,6 +401,66 @@ class AlternativeProductDataService {
         images: [],
         rating: 4.8,
         reviewCount: 47,
+        availability: 'in_stock'
+      },
+      // Walmart products (using Walmart item IDs)
+      '567891234': {
+        name: 'Samsung 55" 4K Smart TV',
+        brand: 'Samsung',
+        price: '$449.99',
+        description: '55-inch 4K UHD Smart TV with HDR and built-in streaming apps',
+        category: 'Electronics',
+        images: [],
+        rating: 4.5,
+        reviewCount: 1250,
+        availability: 'in_stock'
+      },
+      // Target products (using Target DPCI/TCIN)
+      '54321098': {
+        name: 'Target Goodfellow & Co. T-Shirt',
+        brand: 'Goodfellow & Co.',
+        price: '$12.99',
+        description: 'Men\'s short sleeve crew neck t-shirt in various colors',
+        category: 'Clothing',
+        images: [],
+        rating: 4.3,
+        reviewCount: 892,
+        availability: 'in_stock'
+      },
+      // Best Buy products (using Best Buy SKU)
+      '6539232': {
+        name: 'Apple iPhone 15 Pro',
+        brand: 'Apple',
+        price: '$999.99',
+        description: 'iPhone 15 Pro with A17 Pro chip, ProCamera system, and titanium design',
+        category: 'Electronics',
+        images: [],
+        rating: 4.7,
+        reviewCount: 2341,
+        availability: 'in_stock'
+      },
+      // AliExpress products (using AliExpress item IDs)
+      '1005004567890': {
+        name: 'Wireless Bluetooth Earbuds',
+        brand: 'Generic',
+        price: '$15.99',
+        description: 'Wireless earbuds with charging case and noise cancellation',
+        category: 'Electronics',
+        images: [],
+        rating: 4.1,
+        reviewCount: 567,
+        availability: 'in_stock'
+      },
+      // Shopify products (using product handles)
+      'organic-cotton-tshirt': {
+        name: 'Organic Cotton T-Shirt',
+        brand: 'Eco Fashion Co.',
+        price: '$34.99',
+        description: 'Sustainably made organic cotton t-shirt with eco-friendly dyes',
+        category: 'Clothing',
+        images: [],
+        rating: 4.6,
+        reviewCount: 203,
         availability: 'in_stock'
       }
       // We can expand this database as we encounter more products
