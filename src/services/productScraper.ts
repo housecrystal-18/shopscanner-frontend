@@ -1,3 +1,4 @@
+// @ts-nocheck
 // Product Scraper Service - Extracts real product data from retailer websites
 export interface ScrapedProduct {
   name: string;

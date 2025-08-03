@@ -22,7 +22,7 @@ export const ScreenshotAnalyzer: React.FC<ScreenshotAnalyzerProps> = ({ onAnalys
       }
 
       const stream = await navigator.mediaDevices.getDisplayMedia({
-        video: { mediaSource: 'screen' }
+        video: true
       });
 
       const video = document.createElement('video');

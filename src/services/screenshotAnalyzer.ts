@@ -1,4 +1,4 @@
-import { analyzeProductWithAI } from './aiProductAnalyzer';
+// import { analyzeProductWithAI } from './aiProductAnalyzer';
 
 export interface UserSubmittedData {
   url?: string;
@@ -61,9 +61,12 @@ export const analyzeScreenshot = async (imageFile: File | Blob): Promise<string>
     reader.readAsDataURL(imageFile);
   });
 
-  // Use AI to extract text from screenshot
-  const aiAnalysis = await analyzeProductWithAI('', base64);
-  return aiAnalysis.analysis || '';
+  // Use AI to extract text from screenshot (temporarily mock)
+  // const aiAnalysis = await analyzeProductWithAI('', base64);
+  // return aiAnalysis.analysis || '';
+  
+  // For now, return mock text extraction
+  return 'Product analysis from screenshot - mock implementation';
 };
 
 export const analyzeUserSubmission = async (

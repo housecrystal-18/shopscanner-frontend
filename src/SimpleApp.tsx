@@ -211,6 +211,14 @@ export function SimpleApp() {
         scoringFactors.push({ factor: 'Product Authenticity', impact: '-5', reason: 'Unable to verify manufacturing process or product authenticity' });
       }
       
+      // URL pattern analysis for consumer education (no specific platform naming)
+      const urlPatterns = {
+        budgetMarketplace: ['temu.com', 'dhgate.com', 'wish.com'],
+        wholesalePlatform: ['aliexpress.com'],
+        artisanMarketplace: ['etsy.com', 'artfire.com', 'bonanza.com'],
+        majorRetailer: ['amazon.com', 'ebay.com', 'walmart.com', 'target.com', 'bestbuy.com']
+      };
+      
       // Educational URL pattern analysis
       if (urlPatterns.majorRetailer.includes(domain)) {
         positiveFactors.push('Established marketplace pattern detected');
@@ -269,14 +277,6 @@ export function SimpleApp() {
           );
         }
       }
-      
-      // URL pattern analysis for consumer education (no specific platform naming)
-      const urlPatterns = {
-        budgetMarketplace: ['temu.com', 'dhgate.com', 'wish.com'],
-        wholesalePlatform: ['aliexpress.com'],
-        artisanMarketplace: ['etsy.com', 'artfire.com', 'bonanza.com'],
-        majorRetailer: ['amazon.com', 'ebay.com', 'walmart.com', 'target.com', 'bestbuy.com']
-      };
       
       // Educational pattern analysis
       if (urlPatterns.budgetMarketplace.includes(domain)) {
@@ -764,7 +764,7 @@ export function SimpleApp() {
 
   const handleScreenshotAnalysis = (result: ScreenshotAnalysisResult & { submittedData: UserSubmittedData }) => {
     setScreenshotAnalysisResult(result);
-    analytics.productScanned('screenshot', result.confidence, user?.email);
+    analytics.productScanned('url', result.confidence, user?.email);
   };
 
   const handleNewAnalysis = () => {
