@@ -3,9 +3,9 @@ import { loadStripe, Stripe, StripeError } from '@stripe/stripe-js';
 // Production Stripe configuration with proper error handling
 const STRIPE_PUBLISHABLE_KEY = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 
-// Validate Stripe key configuration
+// Validate Stripe key configuration - allow missing key for now
 if (!STRIPE_PUBLISHABLE_KEY) {
-  throw new Error('VITE_STRIPE_PUBLISHABLE_KEY is required but not configured');
+  console.warn('⚠️  VITE_STRIPE_PUBLISHABLE_KEY is not configured - payment features will be disabled');
 }
 
 // Warn if using test keys in production
@@ -18,12 +18,17 @@ if (import.meta.env.PROD && STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_')) {
 let stripePromise: Promise<Stripe | null>;
 
 export const getStripe = (): Promise<Stripe | null> => {
+  if (!STRIPE_PUBLISHABLE_KEY) {
+    console.warn('Stripe not available - no publishable key configured');
+    return Promise.resolve(null);
+  }
+  
   if (!stripePromise) {
     try {
       stripePromise = loadStripe(STRIPE_PUBLISHABLE_KEY);
     } catch (error) {
       console.error('Failed to load Stripe:', error);
-      throw new Error('Stripe initialization failed');
+      return Promise.resolve(null);
     }
   }
   return stripePromise;
