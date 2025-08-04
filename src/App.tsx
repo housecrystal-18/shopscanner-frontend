@@ -145,13 +145,12 @@ function AppContent() {
               } />
               
               <Route path="/blog" element={
-                <Layout>
-                  <div style={{padding: '20px', backgroundColor: 'lightblue', border: '3px solid blue'}}>
-                    <h1>BLOG ROUTE MATCHED!</h1>
-                    <p>If you see this, the /blog route is working</p>
-                  </div>
-                  <BlogListPage />
-                </Layout>
+                <div style={{padding: '50px', backgroundColor: 'lightgreen', color: 'black', fontSize: '24px'}}>
+                  <h1>✅ BLOG ROUTE WORKS!</h1>
+                  <p>This is a minimal test without Layout or BlogListPage</p>
+                  <p>Current URL: {window.location.href}</p>
+                  <p>Current Hash: {window.location.hash}</p>
+                </div>
               } />
               
               <Route path="/blog/:slug" element={
