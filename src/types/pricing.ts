@@ -62,9 +62,10 @@ export const PRICING_PLANS: PricingPlan[] = [
     name: 'Premium',
     price: 10.00,
     billingPeriod: 'month',
-    description: 'Unlimited access for power users and businesses',
+    description: '7-day free trial, then $10/month - cancel anytime',
     popular: true,
     features: [
+      '7-day FREE trial',
       'Unlimited barcode scans',
       'Unlimited store authenticity analyses',
       'Unlimited cross-platform searches',
@@ -75,6 +76,7 @@ export const PRICING_PLANS: PricingPlan[] = [
       'Bulk operations',
       'Export reports (CSV/PDF)',
       'Real-time price alerts',
+      'Cancel anytime - no commitment',
       'API access (coming soon)'
     ],
     limits: {
@@ -90,13 +92,13 @@ export const PRICING_PLANS: PricingPlan[] = [
   {
     id: 'annual',
     name: 'Premium Annual',
-    price: 108.00, // $9/month when billed annually (10% discount)
+    price: 102.00, // $8.50/month when billed annually (15% discount)
     originalPrice: 120.00, // Regular monthly price * 12
     billingPeriod: 'year',
-    description: 'Save 10% with annual billing - best value!',
+    description: 'Save 15% with annual billing - best value!',
     features: [
       'Everything in Premium',
-      '10% discount (save $12/year)',
+      '15% discount (save $18/year)',
       'Priority feature requests',
       'Annual usage reports',
       'Dedicated account manager (for businesses)',

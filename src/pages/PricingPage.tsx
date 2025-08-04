@@ -248,14 +248,16 @@ export function PricingPage() {
                       'Current Plan'
                     ) : plan.id === 'free' ? (
                       'Get Started Free'
+                    ) : plan.id === 'premium' ? (
+                      'Start 7-Day Free Trial'
                     ) : (
-                      'Upgrade Now'
+                      'Start Free Trial & Save 15%'
                     )}
                   </button>
                   
                   {plan.id !== 'free' && (
                     <p className="text-center text-xs text-gray-500 mt-3">
-                      Cancel anytime. No hidden fees.
+                      7-day free trial • Cancel anytime • No hidden fees
                     </p>
                   )}
                 </div>
@@ -386,10 +388,10 @@ export function PricingPage() {
                   and downgrades take effect at the next billing cycle.
                 </p>
                 
-                <h4 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">Is there a free trial for premium features?</h4>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">Do you offer a free trial?</h4>
                 <p className="text-gray-600 text-xs md:text-sm">
-                  The free plan gives you a great taste of our features. We occasionally offer 
-                  free trials for premium plans - sign up for our newsletter to be notified.
+                  Yes! Premium plan includes a 7-day free trial. You can cancel anytime during the trial 
+                  period with no charges. No credit card required to start the trial.
                 </p>
               </div>
             </div>
