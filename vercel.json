@@ -1,22 +1,8 @@
 {
   "rewrites": [
     {
-      "source": "/((?!api|assets|_next|favicon.ico|robots.txt|sitemap.xml|manifest.json|logo|icons|images).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "no-cache, no-store, must-revalidate"
-        }
-      ]
-    }
-  ],
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
-  "framework": "vite"
+  ]
 }
