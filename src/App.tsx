@@ -67,16 +67,12 @@ const queryClient = new QueryClient({
 function AppContent() {
   console.log('AppContent component is rendering');
   
-  // Initialize offline sync
-  useOfflineSync();
-
-  // Initialize analytics (requires auth context)
-  const analytics = useAnalytics();
-
-  // Track route changes for analytics
-  useEffect(() => {
-    analytics.page();
-  }, [analytics]);
+  // Temporarily disable hooks for debugging
+  // useOfflineSync();
+  // const analytics = useAnalytics();
+  // useEffect(() => {
+  //   analytics.page();
+  // }, [analytics]);
 
   // Debug current location
   useEffect(() => {
