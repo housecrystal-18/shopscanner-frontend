@@ -10,8 +10,8 @@ interface SocialShareProps {
 
 export function SocialShare({ 
   url = 'https://shopscanpro.com',
-  title = 'Shop Scan Pro - Verify Product Authenticity Before You Buy',
-  description = 'Scan product URLs and QR codes to detect fake products, analyze store reputation, and get real-time price comparisons. Protect yourself from counterfeits with AI-powered authenticity verification.',
+  title = 'Shop Scan Pro - Shop Smarter: Analyze Product Authenticity First',
+  description = 'Explore product details and identifiers to assess originality. AI-powered educational analysis for informed shopping decisions.',
   className = ''
 }: SocialShareProps) {
   const [showShareMenu, setShowShareMenu] = useState(false);
@@ -167,7 +167,7 @@ export function SocialShareCompact({ url, title, description, className = '' }: 
 
   const handleShare = async () => {
     const shareData = {
-      title: title || 'Shop Scan Pro - Verify Product Authenticity Before You Buy',
+      title: title || 'Shop Scan Pro - Shop Smarter: Analyze Product Authenticity First',
       text: description || 'Protect yourself from counterfeits with AI-powered authenticity verification.',
       url: url || 'https://shopscanpro.com',
     };

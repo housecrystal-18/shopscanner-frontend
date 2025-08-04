@@ -49,7 +49,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-white rounded-full" />
-                  <span>Real-time price comparison</span>
+                  <span>Explore market value trends for related products</span>
                 </div>
                 <div className="flex items-center space-x-3">
                   <div className="w-2 h-2 bg-white rounded-full" />

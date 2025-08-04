@@ -21,6 +21,10 @@ interface Message {
 
 const FAQ_ITEMS = [
   {
+    question: "How do you collect product data?",
+    answer: "Our app analyzes information provided directly by users (such as product URLs, QR codes, and screenshots). We do not scrape websites or bypass any security measures to collect data. All insights are generated from publicly visible information entered voluntarily by our users."
+  },
+  {
     question: "How do I scan a product?",
     answer: "Navigate to the scanner page and point your camera at the product's barcode. The app will automatically detect and scan it."
   },

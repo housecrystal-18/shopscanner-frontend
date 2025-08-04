@@ -166,14 +166,14 @@ export function SimpleApp() {
       
       // Store reputation analysis
       if (storeReputation >= 85) {
-        positiveFactors.push(`High store reputation (${storeReputation}/100)`);
-        scoringFactors.push({ factor: 'Store Reputation', impact: '+15', reason: 'Highly trusted retailer with excellent track record' });
+        positiveFactors.push(`High seller reliability indicators (${storeReputation}/100)`);
+        scoringFactors.push({ factor: 'Seller Reliability Insights', impact: '+15', reason: 'Educational observation: This seller shows patterns typically associated with established, customer-focused businesses' });
       } else if (storeReputation >= 70) {
-        positiveFactors.push(`Good store reputation (${storeReputation}/100)`);
-        scoringFactors.push({ factor: 'Store Reputation', impact: '+10', reason: 'Reputable store with positive customer feedback' });
+        positiveFactors.push(`Good seller reliability indicators (${storeReputation}/100)`);
+        scoringFactors.push({ factor: 'Seller Reliability Insights', impact: '+10', reason: 'Educational observation: This seller demonstrates moderate reliability patterns in customer interactions' });
       } else {
-        negativeFactors.push(`Low store reputation (${storeReputation}/100)`);
-        scoringFactors.push({ factor: 'Store Reputation', impact: '-15', reason: 'Limited reputation or mixed customer reviews' });
+        negativeFactors.push(`Limited seller reliability data (${storeReputation}/100)`);
+        scoringFactors.push({ factor: 'Seller Reliability Insights', impact: '-15', reason: 'Educational observation: Limited data available for assessing seller reliability patterns' });
       }
       
       // Price analysis
@@ -300,7 +300,7 @@ export function SimpleApp() {
       
       if (urlPatterns.majorRetailer.includes(domain)) {
         platformSpecificFactors.push(
-          { factor: 'Established Marketplace Education', impact: '+5', reason: 'Educational tip: Major marketplaces typically have buyer protection, but verify seller ratings and return policies. Consider price comparisons across platforms', positive: true }
+          { factor: 'Established Marketplace Education', impact: '+5', reason: 'Educational tip: Major marketplaces typically have buyer protection, but verify seller ratings and return policies. Explore market value trends across platforms', positive: true }
         );
       }
       
@@ -865,6 +865,7 @@ export function SimpleApp() {
                 <button 
                   onClick={() => setShowView('screenshot-analyzer')}
                   className="bg-green-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-green-700"
+                  style={{ fontSize: '16px', fontWeight: 'bold' }}
                 >
                   📸 New Analysis
                 </button>

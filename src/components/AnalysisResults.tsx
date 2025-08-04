@@ -41,6 +41,7 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({ result, onNewA
       case 'authentic': return 'bg-green-500';
       case 'handmade': return 'bg-blue-500';
       case 'massProduced': return 'bg-orange-500';
+      case 'printOnDemand': return 'bg-purple-500';
       case 'dropshipping': return 'bg-red-500';
       default: return 'bg-gray-500';
     }

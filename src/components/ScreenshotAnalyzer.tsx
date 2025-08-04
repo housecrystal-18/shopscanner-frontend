@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Camera, Upload, Clipboard, AlertCircle, CheckCircle, Info } from 'lucide-react';
 import { analyzeUserSubmission, UserSubmittedData, ScreenshotAnalysisResult } from '../services/screenshotAnalyzer';
 
@@ -8,8 +8,9 @@ interface ScreenshotAnalyzerProps {
 
 export const ScreenshotAnalyzer: React.FC<ScreenshotAnalyzerProps> = ({ onAnalysisComplete }) => {
   const [analyzing, setAnalyzing] = useState(false);
-  const [captureMethod, setCaptureMethod] = useState<'screenshot' | 'upload' | 'manual'>('screenshot');
+  const [captureMethod, setCaptureMethod] = useState<'screenshot' | 'upload' | 'manual'>('upload');
   const [formData, setFormData] = useState<UserSubmittedData>({});
+  const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleScreenCapture = async () => {
@@ -92,10 +93,43 @@ export const ScreenshotAnalyzer: React.FC<ScreenshotAnalyzerProps> = ({ onAnalys
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = Array.from(e.dataTransfer.files);
+    const imageFile = files.find(file => file.type.startsWith('image/'));
+    
+    if (imageFile) {
+      setAnalyzing(true);
+      try {
+        const submittedData = { ...formData, screenshot: imageFile };
+        const result = await analyzeUserSubmission(submittedData);
+        onAnalysisComplete({ ...result, submittedData });
+      } catch (error) {
+        console.error('File analysis failed:', error);
+        alert('Failed to analyze dropped image. Please try again.');
+      }
+      setAnalyzing(false);
+    } else {
+      alert('Please drop an image file (PNG, JPG, etc.)');
+    }
+  }, [formData, onAnalysisComplete]);
+
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white rounded-lg shadow-lg">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-2">Analyze Product Authenticity</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">AI Shopping Transparency</h2>
         <p className="text-gray-600">
           Choose how you'd like to provide product information for analysis. All data stays private and secure.
         </p>
@@ -127,7 +161,7 @@ export const ScreenshotAnalyzer: React.FC<ScreenshotAnalyzerProps> = ({ onAnalys
           >
             <Upload className="w-8 h-8 mx-auto mb-2 text-blue-600" />
             <div className="text-sm font-medium">Upload Image</div>
-            <div className="text-xs text-gray-500">Upload screenshot</div>
+            <div className="text-xs text-gray-500">Drag & drop or browse</div>
           </button>
 
           <button
@@ -174,7 +208,7 @@ export const ScreenshotAnalyzer: React.FC<ScreenshotAnalyzerProps> = ({ onAnalys
         </div>
       )}
 
-      {/* File Upload */}
+      {/* File Upload with Drag & Drop */}
       {captureMethod === 'upload' && (
         <div className="space-y-4">
           <input
@@ -185,19 +219,40 @@ export const ScreenshotAnalyzer: React.FC<ScreenshotAnalyzerProps> = ({ onAnalys
             className="hidden"
           />
           
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={analyzing}
-            className="w-full border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-blue-400 transition-colors disabled:opacity-50"
+          <div
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            onClick={() => !analyzing && fileInputRef.current?.click()}
+            className={`w-full border-2 border-dashed rounded-lg p-12 text-center transition-all cursor-pointer ${
+              isDragOver 
+                ? 'border-blue-500 bg-blue-50' 
+                : analyzing 
+                  ? 'border-gray-300 bg-gray-50 cursor-not-allowed opacity-50'
+                  : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
+            }`}
           >
-            <Upload className="w-12 h-12 mx-auto mb-4 text-gray-400" />
-            <div className="text-lg font-medium text-gray-700">
-              {analyzing ? 'Analyzing Image...' : 'Click to Upload Screenshot'}
+            <Upload className={`w-16 h-16 mx-auto mb-4 ${isDragOver ? 'text-blue-500' : 'text-gray-400'}`} />
+            <div className="text-xl font-medium text-gray-700 mb-2">
+              {analyzing 
+                ? 'Analyzing Image...' 
+                : isDragOver 
+                  ? 'Drop image here!' 
+                  : 'Drag & Drop or Click to Upload'
+              }
             </div>
-            <div className="text-sm text-gray-500 mt-1">
-              PNG, JPG, or other image formats
+            <div className="text-sm text-gray-500">
+              {analyzing 
+                ? 'Please wait while we analyze your screenshot...'
+                : 'PNG, JPG, or other image formats • Max 10MB'
+              }
             </div>
-          </button>
+            {!analyzing && (
+              <div className="mt-4 text-xs text-blue-600">
+                💡 Tip: Take a screenshot of any product page and drop it here for instant analysis
+              </div>
+            )}
+          </div>
         </div>
       )}
 

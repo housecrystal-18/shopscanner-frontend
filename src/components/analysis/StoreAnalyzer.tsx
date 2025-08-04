@@ -54,6 +54,15 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
 
   const getProductTypeIcon = (type: string) => {
     switch (type) {
+      case 'authentic_handmade':
+        return <Wrench className="h-5 w-5" />;
+      case 'legitimate_retail':
+        return <Factory className="h-5 w-5" />;
+      case 'likely_dropshipped':
+        return <Truck className="h-5 w-5" />;
+      case 'custom_printed':
+        return <Printer className="h-5 w-5" />;
+      // Legacy support
       case 'handmade':
         return <Wrench className="h-5 w-5" />;
       case 'mass_produced':
@@ -69,14 +78,23 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
 
   const getProductTypeLabel = (type: string) => {
     switch (type) {
+      case 'authentic_handmade':
+        return 'Authentic Handmade';
+      case 'legitimate_retail':
+        return 'Legitimate Retail';
+      case 'likely_dropshipped':
+        return 'Likely Dropshipped';
+      case 'custom_printed':
+        return 'Custom Printed';
+      // Legacy support
       case 'handmade':
-        return 'Handmade/Artisan';
+        return 'Authentic Handmade';
       case 'mass_produced':
-        return 'Mass Produced';
+        return 'Legitimate Retail';
       case 'dropshipped':
-        return 'Dropshipped';
+        return 'Likely Dropshipped';
       case 'print_on_demand':
-        return 'Print on Demand';
+        return 'Custom Printed';
       default:
         return 'Unknown';
     }
@@ -158,7 +176,7 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
       {currentAnalysis && (
         <div className="space-y-6">
           {/* Overview Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             {/* Authenticity Score */}
             <div className="bg-white rounded-lg shadow-lg p-6">
               <div className="flex items-center justify-between mb-3">
@@ -219,6 +237,33 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
                 }
               </p>
             </div>
+
+            {/* POD Analysis */}
+            {currentAnalysis.podAnalysis && (
+              <div className="bg-white rounded-lg shadow-lg p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center">
+                    <Printer className="h-5 w-5 text-purple-600 mr-2" />
+                    <h4 className="font-semibold text-gray-900">POD Detection</h4>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    currentAnalysis.podAnalysis.isPOD 
+                      ? 'text-purple-600 bg-purple-100' 
+                      : 'text-green-600 bg-green-100'
+                  }`}>
+                    {currentAnalysis.podAnalysis.isPOD ? 'POD Detected' : 'Not POD'}
+                  </span>
+                </div>
+                <p className="text-sm text-gray-600 mb-2">
+                  Confidence: {currentAnalysis.podAnalysis.confidence}%
+                </p>
+                {currentAnalysis.podAnalysis.provider && (
+                  <p className="text-xs text-purple-600 font-medium">
+                    Provider: {currentAnalysis.podAnalysis.provider}
+                  </p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Store Information */}
@@ -361,6 +406,32 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
                 ))}
               </ul>
             </div>
+
+            {/* POD Specific Guidance */}
+            {currentAnalysis.podAnalysis && currentAnalysis.podAnalysis.isPOD && (
+              <div className="bg-purple-50 rounded-lg p-6">
+                <h4 className="text-lg font-semibold text-purple-900 mb-4 flex items-center">
+                  <Printer className="h-5 w-5 mr-2" />
+                  Print-on-Demand Guidance
+                </h4>
+                <div className="space-y-3">
+                  <div className="bg-white rounded-lg p-4">
+                    <p className="text-sm text-purple-800 font-medium mb-2">POD Recommendation:</p>
+                    <p className="text-sm text-gray-700">{currentAnalysis.podAnalysis.recommendation}</p>
+                  </div>
+                  {currentAnalysis.podAnalysis.provider && (
+                    <div className="bg-white rounded-lg p-4">
+                      <p className="text-sm text-purple-800 font-medium mb-2">Detected Provider:</p>
+                      <p className="text-sm text-gray-700">
+                        This product appears to use {currentAnalysis.podAnalysis.provider} for fulfillment. 
+                        This means it's printed/made only after you order, which can result in longer processing times 
+                        but ensures fresh production.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Actions */}

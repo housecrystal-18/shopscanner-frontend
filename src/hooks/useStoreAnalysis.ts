@@ -112,31 +112,31 @@ export function useStoreAnalysis() {
 
     // Product type insights
     switch (analysis.productType) {
-      case 'handmade':
+      case 'authentic_handmade':
         insights.push({
           type: 'positive',
-          message: 'Likely authentic handmade product',
+          message: 'Appears to be authentic handmade product',
           score: 85
         });
         break;
-      case 'mass_produced':
+      case 'legitimate_retail':
         insights.push({
-          type: 'neutral',
-          message: 'Standard retail product',
-          score: 70
+          type: 'positive',
+          message: 'Legitimate retail product from established source',
+          score: 75
         });
         break;
-      case 'dropshipped':
+      case 'likely_dropshipped':
         insights.push({
           type: 'warning',
-          message: 'Dropshipped product - verify quality',
+          message: 'Likely dropshipped - verify quality and shipping times',
           score: 40
         });
         break;
-      case 'print_on_demand':
+      case 'custom_printed':
         insights.push({
           type: 'neutral',
-          message: 'Made-to-order product',
+          message: 'Custom printed made-to-order product',
           score: 65
         });
         break;
@@ -211,10 +211,11 @@ export function useStoreAnalysis() {
       recommendations.push('Verify return/refund policies before purchasing');
     }
 
-    if (analysis.productType === 'dropshipped') {
-      recommendations.push('Expect longer shipping times');
+    if (analysis.productType === 'likely_dropshipped') {
+      recommendations.push('Expect longer shipping times from overseas suppliers');
       recommendations.push('Check if similar products are available locally');
-      recommendations.push('Verify seller communication responsiveness');
+      recommendations.push('Verify seller communication responsiveness before ordering');
+      recommendations.push('Consider potential quality variations from wholesale sources');
     }
 
     if (analysis.riskFactors.level === 'high') {

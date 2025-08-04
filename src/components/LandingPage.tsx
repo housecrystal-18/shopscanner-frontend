@@ -42,12 +42,11 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
         <div className="text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
-            Verify Product Authenticity
-            <span className="block text-blue-600">Before You Buy</span>
+            Shop Smarter
+            <span className="block text-blue-600">Analyze Product Authenticity First</span>
           </h1>
           <p className="text-xl md:text-2xl text-gray-600 mb-8 max-w-3xl mx-auto">
-            Scan product URLs, barcodes, and QR codes to detect fake products, 
-            analyze store reputation, and get real-time price comparisons.
+            Explore product details and identifiers to assess originality.
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -67,7 +66,7 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
 
           {/* Social Sharing Section */}
           <div className="mb-12 text-center">
-            <p className="text-gray-600 mb-4">Help others avoid counterfeit products</p>
+            <p className="text-gray-600 mb-4">Helping shoppers and sellers identify red flags in product listings</p>
             <SocialShare 
               title="Shop Scan Pro - AI-Powered Product Authenticity Verification"
               description="🛡️ Protect yourself from fake products! Scan URLs & QR codes to verify authenticity with advanced AI analysis. Join thousands of smart shoppers staying safe online. #ShopScanPro #AntiCounterfeit"
@@ -80,7 +79,7 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
             <div className="bg-white p-6 rounded-xl shadow-md">
               <ScanLine className="h-12 w-12 text-blue-600 mx-auto mb-4" />
               <h3 className="text-xl font-semibold mb-2">URL Analysis</h3>
-              <p className="text-gray-600">Paste any product URL to analyze store reputation and detect potential fraud.</p>
+              <p className="text-gray-600">Paste any product URL to provide insights into seller reliability and assess product origins.</p>
             </div>
             <div className="bg-white p-6 rounded-xl shadow-md">
               <Shield className="h-12 w-12 text-green-600 mx-auto mb-4" />
@@ -100,9 +99,9 @@ export function LandingPage({ onLogin, onRegister, onViewPricing }: LandingPageP
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
               <div className="border-2 border-gray-200 rounded-xl p-6">
                 <h3 className="text-xl font-semibold mb-2">Free Trial</h3>
-                <div className="text-3xl font-bold mb-4">$0<span className="text-lg text-gray-500">/month</span></div>
+                <div className="text-3xl font-bold mb-4">7 days free</div>
                 <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />10 scans per month</li>
+                  <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />7 days free trial</li>
                   <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Basic authenticity analysis</li>
                   <li className="flex items-center"><Check className="h-4 w-4 text-green-500 mr-2" />Store reputation check</li>
                 </ul>

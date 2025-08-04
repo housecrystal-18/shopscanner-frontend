@@ -1,5 +1,8 @@
+import { shopifyApiService, ShopifyAnalysis } from './shopifyApi';
+import { podDetectionService, PODAnalysis } from './podDetectionService';
+
 interface ProductAnalysis {
-  productType: 'handmade' | 'mass_produced' | 'dropshipped' | 'print_on_demand';
+  productType: 'authentic_handmade' | 'legitimate_retail' | 'likely_dropshipped' | 'custom_printed';
   authenticityScore: number; // 0-100
   confidence: number; // 0-100
   indicators: {
@@ -23,6 +26,13 @@ interface ProductAnalysis {
   riskFactors: {
     level: 'low' | 'medium' | 'high';
     factors: string[];
+  };
+  podAnalysis?: {
+    isPOD: boolean;
+    confidence: number;
+    provider?: string;
+    indicators: string[];
+    recommendation: string;
   };
 }
 
@@ -164,6 +174,11 @@ class StoreAnalyzer {
       const urlObj = new URL(url);
       const domain = urlObj.hostname.replace('www.', '');
       
+      // Check if this is a Shopify store and use API integration
+      if (await this.isShopifyStore(url)) {
+        return await this.analyzeShopifyStoreWithApi(url, productData);
+      }
+      
       // Get store pattern or use generic analysis
       const storePattern = this.storePatterns[domain] || this.getGenericPattern(domain);
       
@@ -193,20 +208,241 @@ class StoreAnalyzer {
       // Assess risk factors
       const riskFactors = this.assessRiskFactors(pageContent, storePattern, authenticityScore);
       
+      // Perform POD analysis
+      const podAnalysis = await this.performPODAnalysis(url, pageContent, productData);
+      
+      // Refine product type based on POD analysis
+      const refinedProductType = this.refineProductTypeWithPOD(productType, podAnalysis);
+      
       return {
-        productType,
+        productType: refinedProductType,
         authenticityScore,
         confidence: this.calculateConfidence(pageContent, storePattern),
         indicators,
         storeMetadata,
         priceAnalysis,
-        riskFactors
+        riskFactors,
+        podAnalysis: podAnalysis ? {
+          isPOD: podAnalysis.isPOD,
+          confidence: podAnalysis.confidence,
+          provider: podAnalysis.provider,
+          indicators: [...podAnalysis.indicators.positive, ...podAnalysis.indicators.negative],
+          recommendation: podAnalysis.recommendedAction
+        } : undefined
       };
       
     } catch (error) {
       console.error('Store analysis error:', error);
       throw new Error('Failed to analyze store URL');
     }
+  }
+
+  private async isShopifyStore(url: string): Promise<boolean> {
+    try {
+      const urlObj = new URL(url);
+      const domain = urlObj.hostname;
+      
+      // Check for obvious Shopify domains
+      if (domain.includes('.myshopify.com')) {
+        return true;
+      }
+      
+      // Check for Shopify indicators in the page
+      try {
+        const response = await fetch(url, { 
+          method: 'HEAD',
+          headers: { 'User-Agent': 'Shop Scan Pro Educational Platform/1.0' }
+        });
+        
+        const poweredBy = response.headers.get('x-shopify-stage') || 
+                         response.headers.get('server') || '';
+        
+        return poweredBy.toLowerCase().includes('shopify');
+      } catch {
+        // If we can't check headers, fall back to domain patterns
+        return false;
+      }
+    } catch {
+      return false;
+    }
+  }
+
+  private async analyzeShopifyStoreWithApi(url: string, productData?: any): Promise<ProductAnalysis> {
+    try {
+      // Use Shopify API service for detailed analysis
+      const shopifyAnalysis = await shopifyApiService.analyzeShopifyStore(url);
+      
+      // Convert Shopify analysis to our ProductAnalysis format
+      return this.convertShopifyAnalysis(shopifyAnalysis, url, productData);
+    } catch (error) {
+      console.error('Shopify API analysis failed, falling back to pattern analysis:', error);
+      
+      // Fallback to pattern-based analysis
+      return this.fallbackShopifyAnalysis(url, productData);
+    }
+  }
+
+  private convertShopifyAnalysis(shopifyAnalysis: ShopifyAnalysis, url: string, productData?: any): ProductAnalysis {
+    // Map Shopify business model to our product type
+    const productTypeMap: Record<string, 'authentic_handmade' | 'legitimate_retail' | 'likely_dropshipped' | 'custom_printed'> = {
+      'brand_owned': 'legitimate_retail',
+      'dropshipping': 'likely_dropshipped',
+      'print_on_demand': 'custom_printed',
+      'mixed': 'legitimate_retail',
+      'reseller': 'likely_dropshipped'
+    };
+
+    const productType = productTypeMap[shopifyAnalysis.businessModel.type] || 'legitimate_retail';
+
+    // Map dropship likelihood to risk level
+    const riskLevelMap: Record<string, 'low' | 'medium' | 'high'> = {
+      'very_low': 'low',
+      'low': 'low',
+      'moderate': 'medium',
+      'high': 'high',
+      'very_high': 'high'
+    };
+
+    const riskLevel = riskLevelMap[shopifyAnalysis.dropshipLikelihood] || 'medium';
+
+    // Combine all indicators
+    const allNegativeIndicators = [
+      ...shopifyAnalysis.authenticity.indicators.negative,
+      ...shopifyAnalysis.educationalInsights.redFlags
+    ];
+
+    const allPositiveIndicators = [
+      ...shopifyAnalysis.authenticity.indicators.positive,
+      ...shopifyAnalysis.educationalInsights.positiveSignals
+    ];
+
+    return {
+      productType,
+      authenticityScore: shopifyAnalysis.authenticity.score,
+      confidence: shopifyAnalysis.businessModel.confidence,
+      indicators: {
+        positive: allPositiveIndicators,
+        negative: allNegativeIndicators,
+        neutral: [
+          ...shopifyAnalysis.authenticity.indicators.neutral,
+          `Store Type: ${shopifyAnalysis.educationalInsights.storeType}`,
+          ...shopifyAnalysis.businessModel.reasoning
+        ]
+      },
+      storeMetadata: {
+        platform: 'Shopify Store',
+        storeName: new URL(url).hostname,
+        storeAge: 'Unknown',
+        sellerRating: undefined,
+        totalSales: undefined,
+        location: 'Unknown'
+      },
+      priceAnalysis: {
+        competitiveScore: shopifyAnalysis.qualityMetrics.professionalism,
+        marketPosition: this.determineMarketPosition(shopifyAnalysis),
+        similarProductsFound: 0
+      },
+      riskFactors: {
+        level: riskLevel,
+        factors: allNegativeIndicators.slice(0, 3) // Limit to top 3 risk factors
+      }
+    };
+  }
+
+  private determineMarketPosition(shopifyAnalysis: ShopifyAnalysis): 'below_market' | 'market_average' | 'above_market' | 'premium' {
+    const overallQuality = (
+      shopifyAnalysis.qualityMetrics.professionalism +
+      shopifyAnalysis.qualityMetrics.productCuration +
+      shopifyAnalysis.qualityMetrics.customerService
+    ) / 3;
+
+    if (overallQuality >= 85) return 'premium';
+    if (overallQuality >= 70) return 'above_market';
+    if (overallQuality >= 50) return 'market_average';
+    return 'below_market';
+  }
+
+  private async fallbackShopifyAnalysis(url: string, productData?: any): Promise<ProductAnalysis> {
+    // Use existing pattern-based analysis for Shopify stores
+    const storePattern = this.storePatterns['shopify.com'];
+    const pageContent = await this.fetchPageContent(url);
+    
+    const productType = this.determineProductType(pageContent, storePattern);
+    const authenticityScore = this.calculateAuthenticityScore(pageContent, storePattern, productType, productData);
+    const indicators = this.analyzeIndicators(pageContent, storePattern);
+    const storeMetadata = this.extractStoreMetadata(pageContent, storePattern);
+    const priceAnalysis = this.analyzePricing(pageContent, productData);
+    const riskFactors = this.assessRiskFactors(pageContent, storePattern, authenticityScore);
+
+    // Add API failure indicator
+    indicators.neutral.push('Analysis performed without API access - limited data available');
+
+    return {
+      productType,
+      authenticityScore,
+      confidence: Math.max(30, this.calculateConfidence(pageContent, storePattern) - 20), // Reduce confidence for fallback
+      indicators,
+      storeMetadata,
+      priceAnalysis,
+      riskFactors
+    };
+  }
+
+  private async performPODAnalysis(url: string, pageContent: string, productData?: any): Promise<PODAnalysis | null> {
+    try {
+      // Extract relevant product information for POD analysis
+      const productDescription = productData?.description || pageContent || '';
+      
+      // Perform POD likelihood analysis
+      const podAnalysis = await podDetectionService.analyzePODLikelihood(
+        productData,
+        url,
+        productDescription
+      );
+      
+      return podAnalysis;
+    } catch (error) {
+      console.error('POD analysis failed:', error);
+      return null;
+    }
+  }
+
+  private refineProductTypeWithPOD(
+    originalType: 'authentic_handmade' | 'legitimate_retail' | 'likely_dropshipped' | 'custom_printed',
+    podAnalysis: PODAnalysis | null
+  ): 'authentic_handmade' | 'legitimate_retail' | 'likely_dropshipped' | 'custom_printed' {
+    if (!podAnalysis) {
+      return originalType;
+    }
+
+    // If POD is detected with high confidence, refine the type
+    if (podAnalysis.isPOD && podAnalysis.confidence > 60) {
+      // If originally thought to be handmade but POD detected, it's likely custom printed
+      if (originalType === 'authentic_handmade') {
+        return 'custom_printed';
+      }
+      
+      // If originally thought to be retail but POD detected, it's likely custom printed
+      if (originalType === 'legitimate_retail') {
+        return 'custom_printed';
+      }
+    }
+
+    // If POD confidence is low and original type was custom_printed, might be authentic handmade
+    if (!podAnalysis.isPOD && originalType === 'custom_printed') {
+      // Check for strong handmade indicators in the POD analysis
+      const handmadeIndicators = podAnalysis.indicators.negative.filter(indicator => 
+        indicator.toLowerCase().includes('handmade') || 
+        indicator.toLowerCase().includes('artisan') ||
+        indicator.toLowerCase().includes('hand crafted')
+      );
+      
+      if (handmadeIndicators.length > 0) {
+        return 'authentic_handmade';
+      }
+    }
+
+    return originalType;
   }
 
   private async fetchPageContent(url: string): Promise<string> {
@@ -232,7 +468,7 @@ class StoreAnalyzer {
   private determineProductType(
     content: string, 
     pattern: any
-  ): 'handmade' | 'mass_produced' | 'dropshipped' | 'print_on_demand' {
+  ): 'authentic_handmade' | 'legitimate_retail' | 'likely_dropshipped' | 'custom_printed' {
     const contentLower = content.toLowerCase();
     const scores = {
       handmade: 0,
@@ -253,9 +489,19 @@ class StoreAnalyzer {
     });
 
     // Return the highest scoring type
-    return Object.entries(scores).reduce((a, b) => 
+    const highestType = Object.entries(scores).reduce((a, b) => 
       scores[a[0] as keyof typeof scores] > scores[b[0] as keyof typeof scores] ? a : b
     )[0] as keyof typeof scores;
+
+    // Map old types to new opinionated types
+    const typeMap: Record<string, 'authentic_handmade' | 'legitimate_retail' | 'likely_dropshipped' | 'custom_printed'> = {
+      'handmade': 'authentic_handmade',
+      'mass_produced': 'legitimate_retail',
+      'dropshipped': 'likely_dropshipped',
+      'print_on_demand': 'custom_printed'
+    };
+
+    return typeMap[highestType] || 'legitimate_retail';
   }
 
   private calculateAuthenticityScore(
@@ -283,16 +529,16 @@ class StoreAnalyzer {
 
     // Product type specific adjustments
     switch (productType) {
-      case 'handmade':
+      case 'authentic_handmade':
         score += 15; // Generally more authentic
         break;
-      case 'mass_produced':
+      case 'legitimate_retail':
         score += 10; // Usually legitimate
         break;
-      case 'dropshipped':
+      case 'likely_dropshipped':
         score -= 20; // Higher risk
         break;
-      case 'print_on_demand':
+      case 'custom_printed':
         score += 5; // Moderate authenticity
         break;
     }

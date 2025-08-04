@@ -59,7 +59,7 @@ export function StoreAnalysisPage() {
                   <div className="mt-4">
                     <h4 className="font-medium mb-2 text-blue-900">Supported Platforms:</h4>
                     <p className="text-sm text-blue-800">
-                      Amazon, eBay, Etsy, Shopify stores, AliExpress, and most e-commerce websites
+                      Amazon, eBay, Etsy, <strong>Shopify stores (with official API integration)</strong>, AliExpress, and most e-commerce websites
                     </p>
                   </div>
                 </div>

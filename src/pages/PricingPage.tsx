@@ -353,6 +353,13 @@ export function PricingPage() {
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
               <div>
+                <h4 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">How do you collect product data?</h4>
+                <p className="text-gray-600 text-xs md:text-sm mb-4">
+                  Our app analyzes information provided directly by users (such as product URLs, QR codes, and screenshots). 
+                  We do not scrape websites or bypass any security measures to collect data. All insights are generated 
+                  from publicly visible information entered voluntarily by our users.
+                </p>
+                
                 <h4 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">Is my data really safe?</h4>
                 <p className="text-gray-600 text-xs md:text-sm mb-4">
                   Absolutely. We never sell your personal information and use industry-standard encryption. 
@@ -360,14 +367,9 @@ export function PricingPage() {
                 </p>
                 
                 <h4 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">Can I cancel anytime?</h4>
-                <p className="text-gray-600 text-xs md:text-sm mb-4">
+                <p className="text-gray-600 text-xs md:text-sm">
                   Yes, you can cancel your subscription at any time. You'll continue to have access 
                   until the end of your billing period.
-                </p>
-                
-                <h4 className="font-semibold text-gray-900 mb-2 text-sm md:text-base">What payment methods do you accept?</h4>
-                <p className="text-gray-600 text-xs md:text-sm">
-                  We accept all major credit cards, PayPal, and bank transfers for annual plans.
                 </p>
               </div>
               

@@ -142,6 +142,11 @@ export function Footer() {
             </a>
           </div>
         </div>
+
+        {/* Amazon Associates Disclosure */}
+        <div className="mt-4 text-center text-xs text-gray-500">
+          <p>As an Amazon Associate I earn from qualifying purchases. | Associate ID: scanproedu-20</p>
+        </div>
       </div>
     </footer>
   );

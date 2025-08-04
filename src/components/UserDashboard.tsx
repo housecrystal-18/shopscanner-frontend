@@ -85,7 +85,7 @@ export function UserDashboard({ user, onBack }: UserDashboardProps) {
             <div className="flex items-center">
               <Star className="h-8 w-8 text-green-600 mr-3" />
               <div>
-                <p className="text-sm text-gray-600">Authentic Products</p>
+                <p className="text-sm text-gray-600">Product Reality Check</p>
                 <p className="text-2xl font-bold text-green-600">{stats.authenticProducts}</p>
               </div>
             </div>

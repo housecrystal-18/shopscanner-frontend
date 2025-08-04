@@ -16,6 +16,7 @@ export interface ScreenshotAnalysisResult {
     dropshipping: number;
     massProduced: number;
     handmade: number;
+    printOnDemand: number;
     authentic: number;
   };
   indicators: string[];
@@ -23,34 +24,136 @@ export interface ScreenshotAnalysisResult {
   riskLevel: 'low' | 'medium' | 'high';
 }
 
-// Pattern database (to be expanded)
+// Comprehensive Pattern Database for Educational Analysis
 const DROPSHIP_PATTERNS = [
-  'ships from china',
-  'processing time 2-4 weeks',
-  'estimated delivery 15-30 days',
-  'warehouse direct',
-  'factory outlet',
-  'bulk wholesale'
+  // Shipping indicators
+  'ships from china', 'ships from asia', 'international shipping', 'overseas warehouse',
+  'processing time 2-4 weeks', 'processing time 3-5 weeks', 'allow 2-3 weeks processing',
+  'estimated delivery 15-30 days', 'delivery 20-45 days', '15-25 business days',
+  'ships from guangzhou', 'ships from shenzhen', 'ships from yiwu',
+  
+  // Business model indicators
+  'warehouse direct', 'factory outlet', 'bulk wholesale', 'supplier direct',
+  'no brand packaging', 'opp bag packaging', 'generic packaging',
+  'dropshipping', 'drop ship', 'fulfilled by merchant',
+  
+  // Pricing patterns
+  'buy 2 get 1 free', 'bulk discount available', 'wholesale pricing',
+  'minimum order quantity', 'moq:', 'order in bulk',
+  
+  // Generic product descriptions
+  'universal fit', 'one size fits all', 'compatible with most',
+  'unbranded', 'no logo', 'generic brand',
+  
+  // Platform-specific indicators
+  'aliexpress standard shipping', 'cainiao tracking', 'yanwen tracking',
+  'epacket delivery', 'china post tracking'
 ];
 
 const HANDMADE_INDICATORS = [
-  'made to order',
-  'custom',
-  'personalized',
-  'handcrafted',
-  'artisan',
-  'small batch',
-  'limited edition',
-  'bespoke'
+  // Creation process
+  'made to order', 'handmade', 'hand made', 'handcrafted', 'hand crafted',
+  'custom', 'customized', 'personalized', 'bespoke', 'artisan made',
+  'hand painted', 'hand carved', 'hand stitched', 'hand sewn',
+  'hand forged', 'hand blown', 'hand thrown', 'hand turned',
+  
+  // Production scale
+  'small batch', 'limited edition', 'one of a kind', 'ooak',
+  'made in small quantities', 'limited run', 'artisan crafted',
+  'studio made', 'workshop created',
+  
+  // Techniques
+  'laser engraved', 'laser cut', 'wood burned', 'pyrography',
+  'sublimated', 'heat pressed', 'screen printed by hand',
+  'embroidered', 'crocheted', 'knitted', 'quilted',
+  'pottery wheel', 'kiln fired', 'glazed by hand',
+  
+  // Artist/maker identity
+  'artist signature', 'maker mark', 'signed piece',
+  'local artist', 'independent maker', 'family business',
+  'home studio', 'cottage industry',
+  
+  // Process documentation
+  'work in progress photos', 'making process', 'behind the scenes',
+  'from sketch to finish', 'creation story'
 ];
 
 const MASS_PRODUCTION_INDICATORS = [
-  'in stock: 999+',
-  'sold 10,000+',
-  'bestseller #1',
-  'trending now',
-  'limited time offer',
-  'flash sale'
+  // Inventory scale
+  'in stock: 999+', 'in stock: 9999+', 'unlimited stock',
+  'sold 10,000+', 'sold 50,000+', 'sold 100,000+',
+  'over 1 million sold', 'bestseller #1', '#1 choice',
+  
+  // Marketing language
+  'trending now', 'viral product', 'as seen on tv',
+  'limited time offer', 'flash sale', 'today only',
+  'while supplies last', 'hurry, almost sold out',
+  
+  // Scale indicators
+  'factory direct', 'manufacturer direct', 'wholesale available',
+  'bulk orders accepted', 'corporate pricing',
+  'volume discounts', 'quantity breaks',
+  
+  // Distribution
+  'available in stores', 'retail distribution',
+  'multiple SKUs', 'various colors available',
+  'size chart included', 'standard sizing',
+  
+  // Brand markers
+  'official licensed', 'authorized retailer',
+  'brand warranty', 'manufacturer warranty',
+  'model number', 'part number', 'sku:'
+];
+
+const PRINT_ON_DEMAND_INDICATORS = [
+  // POD platforms
+  'printed when ordered', 'made when you order',
+  'print on demand', 'custom printed', 'personalized printing',
+  
+  // Fulfillment
+  'printful', 'printify', 'gooten', 'printed mint',
+  'teespring', 'redbubble', 'society6', 'zazzle',
+  
+  // Product types
+  't-shirt printing', 'mug printing', 'poster printing',
+  'canvas printing', 'phone case printing',
+  'customizable design', 'add your text',
+  
+  // Process indicators
+  'high quality printing', 'dtg printing', 'sublimation printing',
+  'vinyl printing', 'heat transfer', 'digital printing'
+];
+
+const QUALITY_CONCERNS = [
+  // Material warnings
+  'may contain lead', 'not food safe', 'decorative only',
+  'not for children under 3', 'choking hazard',
+  'flammable material', 'hand wash only',
+  
+  // Disclaimer language
+  'color may vary', 'actual color may differ',
+  'monitor differences', 'lighting effects',
+  'minor imperfections', 'slight variations normal',
+  
+  // Generic quality
+  'economy grade', 'budget option', 'basic quality',
+  'entry level', 'standard grade', 'commercial grade'
+];
+
+const AUTHENTIC_BRAND_INDICATORS = [
+  // Official channels
+  'authorized dealer', 'official retailer', 'brand authorized',
+  'factory authorized', 'certified dealer',
+  
+  // Authentication
+  'authenticity guaranteed', 'genuine product',
+  'original packaging', 'factory sealed',
+  'hologram sticker', 'security tag',
+  
+  // Warranty/support
+  'manufacturer warranty', 'official warranty',
+  'customer service included', 'technical support',
+  'repair service available'
 ];
 
 export const analyzeScreenshot = async (imageFile: File | Blob): Promise<string> => {
@@ -77,6 +180,7 @@ export const analyzeUserSubmission = async (
     dropshipping: 0,
     massProduced: 0,
     handmade: 0,
+    printOnDemand: 0,
     authentic: 50 // Start neutral
   };
   const indicators: string[] = [];
@@ -103,27 +207,54 @@ export const analyzeUserSubmission = async (
   // Analyze for dropshipping patterns
   DROPSHIP_PATTERNS.forEach(pattern => {
     if (allText.includes(pattern)) {
-      patterns.dropshipping += 15;
-      patterns.authentic -= 10;
-      indicators.push(`Found dropshipping indicator: "${pattern}"`);
+      patterns.dropshipping += 12;
+      patterns.authentic -= 8;
+      indicators.push(`Educational observation: Dropshipping pattern detected - "${pattern}"`);
     }
   });
 
   // Analyze for handmade indicators
   HANDMADE_INDICATORS.forEach(indicator => {
     if (allText.includes(indicator)) {
-      patterns.handmade += 10;
-      patterns.authentic += 5;
-      indicators.push(`Handmade indicator detected: "${indicator}"`);
+      patterns.handmade += 15;
+      patterns.authentic += 8;
+      indicators.push(`Educational observation: Handmade craftsmanship indicator - "${indicator}"`);
     }
   });
 
   // Analyze for mass production
   MASS_PRODUCTION_INDICATORS.forEach(indicator => {
     if (allText.includes(indicator)) {
-      patterns.massProduced += 12;
+      patterns.massProduced += 10;
+      patterns.authentic -= 3;
+      indicators.push(`Educational observation: Mass production indicator - "${indicator}"`);
+    }
+  });
+
+  // Analyze for print-on-demand patterns
+  PRINT_ON_DEMAND_INDICATORS.forEach(indicator => {
+    if (allText.includes(indicator)) {
+      patterns.printOnDemand += 18;
       patterns.authentic -= 5;
-      indicators.push(`Mass production pattern: "${indicator}"`);
+      indicators.push(`Educational observation: Print-on-demand pattern - "${indicator}"`);
+    }
+  });
+
+  // Analyze for quality concerns
+  QUALITY_CONCERNS.forEach(concern => {
+    if (allText.includes(concern)) {
+      patterns.authentic -= 8;
+      indicators.push(`Educational observation: Quality consideration noted - "${concern}"`);
+    }
+  });
+
+  // Analyze for authentic brand indicators
+  AUTHENTIC_BRAND_INDICATORS.forEach(indicator => {
+    if (allText.includes(indicator)) {
+      patterns.authentic += 15;
+      patterns.dropshipping -= 5;
+      patterns.printOnDemand -= 5;
+      indicators.push(`Educational observation: Authenticity indicator - "${indicator}"`);
     }
   });
 
@@ -164,17 +295,42 @@ export const analyzeUserSubmission = async (
     95
   );
 
-  // Determine risk level
+  // Determine risk level with comprehensive analysis
   let riskLevel: 'low' | 'medium' | 'high' = 'medium';
-  if (patterns.authentic > 60) riskLevel = 'low';
-  else if (patterns.dropshipping > 50 || patterns.massProduced > 50) riskLevel = 'high';
-
-  // Add educational insights based on analysis
-  if (patterns.dropshipping > 40) {
-    educationalInsights.push('This product shows patterns commonly associated with dropshipping operations');
+  if (patterns.authentic > 60 && patterns.handmade > 30) {
+    riskLevel = 'low';
+  } else if (patterns.dropshipping > 50 || patterns.printOnDemand > 60 || (patterns.massProduced > 70 && patterns.authentic < 40)) {
+    riskLevel = 'high';
   }
+
+  // Add comprehensive educational insights based on analysis
+  if (patterns.dropshipping > 30) {
+    educationalInsights.push('Educational insight: This product shows patterns commonly associated with dropshipping operations - consider longer shipping times and potential quality variations');
+  }
+  
+  if (patterns.printOnDemand > 40) {
+    educationalInsights.push('Educational insight: Print-on-demand patterns detected - these products are typically made after ordering, which can affect delivery time and quality consistency');
+  }
+  
+  if (patterns.massProduced > 40) {
+    educationalInsights.push('Educational insight: This listing appears similar to known mass-produced products - compare across multiple platforms for price verification');
+  }
+  
   if (patterns.handmade > 40) {
-    educationalInsights.push('Several handmade indicators were detected - consider verifying with seller photos of their creation process');
+    educationalInsights.push('Educational insight: Several handmade craftsmanship indicators were detected - look for maker stories, process photos, and creation details to verify authenticity');
+  }
+  
+  if (patterns.authentic > 60) {
+    educationalInsights.push('Educational insight: Multiple authenticity indicators found - this suggests a legitimate product from an established source');
+  }
+  
+  // Provide shopping guidance based on patterns
+  if (patterns.dropshipping > 50 && patterns.printOnDemand > 30) {
+    educationalInsights.push('Shopping tip: Mixed fulfillment patterns detected - verify seller location, shipping policies, and return procedures before purchasing');
+  }
+  
+  if (patterns.handmade > 50 && patterns.massProduced > 30) {
+    educationalInsights.push('Shopping tip: Conflicting production indicators found - request additional details about the making process to clarify the product origin');
   }
 
   return {
