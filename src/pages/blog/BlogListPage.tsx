@@ -5,8 +5,10 @@ import { BlogList } from '../../components/blog/BlogList';
 import { blogService } from '../../services/blogService';
 
 export function BlogListPage() {
+  console.log('BlogListPage is rendering!'); // Debug log
   const posts = blogService.getAllPosts();
   const categories = blogService.getCategories();
+  console.log('Posts loaded:', posts.length); // Debug log
 
   useEffect(() => {
     // Track page view for analytics

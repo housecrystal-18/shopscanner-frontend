@@ -132,6 +132,15 @@ function App() {
                 </Layout>
               } />
               
+              <Route path="/test" element={
+                <Layout>
+                  <div style={{padding: '50px', textAlign: 'center'}}>
+                    <h1 style={{fontSize: '48px', color: 'red'}}>TEST ROUTE WORKS!</h1>
+                    <p>If you see this, React Router is working</p>
+                  </div>
+                </Layout>
+              } />
+              
               <Route path="/blog" element={
                 <Layout>
                   <BlogListPage />
