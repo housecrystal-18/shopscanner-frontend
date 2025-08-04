@@ -1,5 +1,14 @@
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+
+// Debug component to log location changes
+function LocationLogger() {
+  const location = useLocation();
+  console.log('Current location:', location);
+  console.log('Pathname:', location.pathname);
+  console.log('Hash:', location.hash);
+  return null;
+}
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
@@ -96,6 +105,7 @@ function App() {
         <SubscriptionProvider>
           <Router>
           <div className="min-h-screen bg-gray-50">
+            <LocationLogger />
             <Routes>
               {/* Public routes with auth layout */}
               <Route path="/login" element={
@@ -142,11 +152,19 @@ function App() {
               
               <Route path="/test" element={
                 <Layout>
-                  <div style={{padding: '50px', textAlign: 'center'}}>
-                    <h1 style={{fontSize: '48px', color: 'red'}}>TEST ROUTE WORKS!</h1>
-                    <p>If you see this, React Router is working</p>
+                  <div style={{padding: '50px', textAlign: 'center', backgroundColor: 'yellow'}}>
+                    <h1 style={{fontSize: '48px', color: 'red', border: '5px solid red'}}>TEST ROUTE WORKS!</h1>
+                    <p style={{fontSize: '24px', color: 'blue'}}>If you see this, React Router is working</p>
+                    <p>Current URL: {window.location.href}</p>
+                    <p>Current Hash: {window.location.hash}</p>
                   </div>
                 </Layout>
+              } />
+              
+              <Route path="/simple-test" element={
+                <div style={{padding: '100px', backgroundColor: 'green', color: 'white', fontSize: '48px'}}>
+                  SIMPLE TEST PAGE - NO LAYOUT
+                </div>
               } />
               
               <Route path="/blog" element={
