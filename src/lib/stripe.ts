@@ -9,7 +9,7 @@ if (!STRIPE_PUBLISHABLE_KEY) {
 }
 
 // Warn if using test keys in production
-if (import.meta.env.PROD && STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_')) {
+if (import.meta.env.PROD && STRIPE_PUBLISHABLE_KEY && STRIPE_PUBLISHABLE_KEY.startsWith('pk_test_')) {
   console.warn('⚠️  Using Stripe test key in production mode');
 }
 
