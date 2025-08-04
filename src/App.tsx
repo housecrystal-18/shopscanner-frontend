@@ -146,11 +146,15 @@ function AppContent() {
               
               <Route path="/blog" element={
                 <Layout>
-                  <div style={{padding: '50px', backgroundColor: 'lightgreen', color: 'black', fontSize: '24px'}}>
-                    <h1>✅ BLOG ROUTE WORKS WITH LAYOUT!</h1>
-                    <p>This tests if Layout component works</p>
-                    <p>Current URL: {window.location.href}</p>
-                    <p>Current Hash: {window.location.hash}</p>
+                  <div className="min-h-screen bg-gray-50">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+                      <h1 className="text-4xl font-bold text-center mb-8">Blog</h1>
+                      <p className="text-center text-gray-600 mb-8">Educational content about e-commerce</p>
+                      <div className="bg-white rounded-lg shadow p-6">
+                        <h2 className="text-2xl font-bold mb-4">Test Blog Post</h2>
+                        <p>This is a minimal blog page without the complex BlogListPage component.</p>
+                      </div>
+                    </div>
                   </div>
                 </Layout>
               } />
