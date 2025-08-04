@@ -112,28 +112,28 @@ export function useStoreAnalysis() {
 
     // Product type insights
     switch (analysis.productType) {
-      case 'authentic_handmade':
+      case 'authenticHandmade':
         insights.push({
           type: 'positive',
           message: 'Appears to be authentic handmade product',
           score: 85
         });
         break;
-      case 'likely_mass_produced':
+      case 'likelyMassProduced':
         insights.push({
           type: 'neutral',
           message: 'Likely mass produced - standard commercial product',
           score: 70
         });
         break;
-      case 'likely_dropshipped':
+      case 'likelyDropshipped':
         insights.push({
           type: 'warning',
           message: 'Likely dropshipped - verify quality and shipping times',
           score: 40
         });
         break;
-      case 'custom_printed':
+      case 'customPrinted':
         insights.push({
           type: 'neutral',
           message: 'Custom printed made-to-order product',
@@ -211,7 +211,7 @@ export function useStoreAnalysis() {
       recommendations.push('Verify return/refund policies before purchasing');
     }
 
-    if (analysis.productType === 'likely_dropshipped') {
+    if (analysis.productType === 'likelyDropshipped') {
       recommendations.push('Expect longer shipping times from overseas suppliers');
       recommendations.push('Check if similar products are available locally');
       recommendations.push('Verify seller communication responsiveness before ordering');

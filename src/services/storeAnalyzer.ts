@@ -2,7 +2,7 @@ import { shopifyApiService, ShopifyAnalysis } from './shopifyApi';
 import { podDetectionService, PODAnalysis } from './podDetectionService';
 
 interface ProductAnalysis {
-  productType: 'authentic_handmade' | 'likely_mass_produced' | 'likely_dropshipped' | 'custom_printed';
+  productType: 'authenticHandmade' | 'likelyMassProduced' | 'likelyDropshipped' | 'customPrinted';
   authenticityScore: number; // 0-100
   confidence: number; // 0-100
   indicators: {
@@ -284,15 +284,15 @@ class StoreAnalyzer {
 
   private convertShopifyAnalysis(shopifyAnalysis: ShopifyAnalysis, url: string, productData?: any): ProductAnalysis {
     // Map Shopify business model to our product type
-    const productTypeMap: Record<string, 'authentic_handmade' | 'likely_mass_produced' | 'likely_dropshipped' | 'custom_printed'> = {
-      'brand_owned': 'likely_mass_produced',
-      'dropshipping': 'likely_dropshipped',
-      'print_on_demand': 'custom_printed',
-      'mixed': 'likely_mass_produced',
-      'reseller': 'likely_dropshipped'
+    const productTypeMap: Record<string, 'authenticHandmade' | 'likelyMassProduced' | 'likelyDropshipped' | 'customPrinted'> = {
+      'brand_owned': 'likelyMassProduced',
+      'dropshipping': 'likelyDropshipped',
+      'print_on_demand': 'customPrinted',
+      'mixed': 'likelyMassProduced',
+      'reseller': 'likelyDropshipped'
     };
 
-    const productType = productTypeMap[shopifyAnalysis.businessModel.type] || 'likely_mass_produced';
+    const productType = productTypeMap[shopifyAnalysis.businessModel.type] || 'likelyMassProduced';
 
     // Map dropship likelihood to risk level
     const riskLevelMap: Record<string, 'low' | 'medium' | 'high'> = {
@@ -408,9 +408,9 @@ class StoreAnalyzer {
   }
 
   private refineProductTypeWithPOD(
-    originalType: 'authentic_handmade' | 'likely_mass_produced' | 'likely_dropshipped' | 'custom_printed',
+    originalType: 'authenticHandmade' | 'likelyMassProduced' | 'likelyDropshipped' | 'customPrinted',
     podAnalysis: PODAnalysis | null
-  ): 'authentic_handmade' | 'likely_mass_produced' | 'likely_dropshipped' | 'custom_printed' {
+  ): 'authenticHandmade' | 'likelyMassProduced' | 'likelyDropshipped' | 'customPrinted' {
     if (!podAnalysis) {
       return originalType;
     }
@@ -418,18 +418,18 @@ class StoreAnalyzer {
     // If POD is detected with high confidence, refine the type
     if (podAnalysis.isPOD && podAnalysis.confidence > 60) {
       // If originally thought to be handmade but POD detected, it's likely custom printed
-      if (originalType === 'authentic_handmade') {
-        return 'custom_printed';
+      if (originalType === 'authenticHandmade') {
+        return 'customPrinted';
       }
       
       // If originally thought to be retail but POD detected, it's likely custom printed
-      if (originalType === 'likely_mass_produced') {
-        return 'custom_printed';
+      if (originalType === 'likelyMassProduced') {
+        return 'customPrinted';
       }
     }
 
     // If POD confidence is low and original type was custom_printed, might be authentic handmade
-    if (!podAnalysis.isPOD && originalType === 'custom_printed') {
+    if (!podAnalysis.isPOD && originalType === 'customPrinted') {
       // Check for strong handmade indicators in the POD analysis
       const handmadeIndicators = podAnalysis.indicators.negative.filter(indicator => 
         indicator.toLowerCase().includes('handmade') || 
@@ -438,7 +438,7 @@ class StoreAnalyzer {
       );
       
       if (handmadeIndicators.length > 0) {
-        return 'authentic_handmade';
+        return 'authenticHandmade';
       }
     }
 
@@ -468,7 +468,7 @@ class StoreAnalyzer {
   private determineProductType(
     content: string, 
     pattern: any
-  ): 'authentic_handmade' | 'likely_mass_produced' | 'likely_dropshipped' | 'custom_printed' {
+  ): 'authenticHandmade' | 'likelyMassProduced' | 'likelyDropshipped' | 'customPrinted' {
     const contentLower = content.toLowerCase();
     const scores = {
       handmade: 0,
@@ -494,14 +494,14 @@ class StoreAnalyzer {
     )[0] as keyof typeof scores;
 
     // Map old types to new opinionated types
-    const typeMap: Record<string, 'authentic_handmade' | 'likely_mass_produced' | 'likely_dropshipped' | 'custom_printed'> = {
-      'handmade': 'authentic_handmade',
-      'mass_produced': 'likely_mass_produced',
-      'dropshipped': 'likely_dropshipped',
-      'print_on_demand': 'custom_printed'
+    const typeMap: Record<string, 'authenticHandmade' | 'likelyMassProduced' | 'likelyDropshipped' | 'customPrinted'> = {
+      'handmade': 'authenticHandmade',
+      'mass_produced': 'likelyMassProduced',
+      'dropshipped': 'likelyDropshipped',
+      'print_on_demand': 'customPrinted'
     };
 
-    return typeMap[highestType] || 'likely_mass_produced';
+    return typeMap[highestType] || 'likelyMassProduced';
   }
 
   private calculateAuthenticityScore(
@@ -529,16 +529,16 @@ class StoreAnalyzer {
 
     // Product type specific adjustments
     switch (productType) {
-      case 'authentic_handmade':
+      case 'authenticHandmade':
         score += 15; // Generally more authentic
         break;
-      case 'likely_mass_produced':
+      case 'likelyMassProduced':
         score += 10; // Usually legitimate
         break;
-      case 'likely_dropshipped':
+      case 'likelyDropshipped':
         score -= 20; // Higher risk
         break;
-      case 'custom_printed':
+      case 'customPrinted':
         score += 5; // Moderate authenticity
         break;
     }

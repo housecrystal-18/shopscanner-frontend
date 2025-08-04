@@ -54,13 +54,13 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
 
   const getProductTypeIcon = (type: string) => {
     switch (type) {
-      case 'authentic_handmade':
+      case 'authenticHandmade':
         return <Wrench className="h-5 w-5" />;
-      case 'likely_mass_produced':
+      case 'likelyMassProduced':
         return <Factory className="h-5 w-5" />;
-      case 'likely_dropshipped':
+      case 'likelyDropshipped':
         return <Truck className="h-5 w-5" />;
-      case 'custom_printed':
+      case 'customPrinted':
         return <Printer className="h-5 w-5" />;
       // Legacy support
       case 'handmade':
@@ -78,13 +78,13 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
 
   const getProductTypeLabel = (type: string) => {
     switch (type) {
-      case 'authentic_handmade':
+      case 'authenticHandmade':
         return 'Authentic Handmade';
-      case 'likely_mass_produced':
+      case 'likelyMassProduced':
         return 'Likely Mass Produced';
-      case 'likely_dropshipped':
+      case 'likelyDropshipped':
         return 'Likely Dropshipped';
-      case 'custom_printed':
+      case 'customPrinted':
         return 'Custom Printed';
       // Legacy support
       case 'handmade':
