@@ -119,11 +119,11 @@ export function useStoreAnalysis() {
           score: 85
         });
         break;
-      case 'legitimate_retail':
+      case 'likely_mass_produced':
         insights.push({
-          type: 'positive',
-          message: 'Legitimate retail product from established source',
-          score: 75
+          type: 'neutral',
+          message: 'Likely mass produced - standard commercial product',
+          score: 70
         });
         break;
       case 'likely_dropshipped':

@@ -56,7 +56,7 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
     switch (type) {
       case 'authentic_handmade':
         return <Wrench className="h-5 w-5" />;
-      case 'legitimate_retail':
+      case 'likely_mass_produced':
         return <Factory className="h-5 w-5" />;
       case 'likely_dropshipped':
         return <Truck className="h-5 w-5" />;
@@ -80,8 +80,8 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
     switch (type) {
       case 'authentic_handmade':
         return 'Authentic Handmade';
-      case 'legitimate_retail':
-        return 'Legitimate Retail';
+      case 'likely_mass_produced':
+        return 'Likely Mass Produced';
       case 'likely_dropshipped':
         return 'Likely Dropshipped';
       case 'custom_printed':
@@ -90,7 +90,7 @@ export function StoreAnalyzer({ productData, onAnalysisComplete }: StoreAnalyzer
       case 'handmade':
         return 'Authentic Handmade';
       case 'mass_produced':
-        return 'Legitimate Retail';
+        return 'Likely Mass Produced';
       case 'dropshipped':
         return 'Likely Dropshipped';
       case 'print_on_demand':
