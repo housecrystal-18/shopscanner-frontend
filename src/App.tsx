@@ -63,21 +63,15 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
-  console.log('App component is rendering');
+// Inner app component that uses auth-dependent hooks
+function AppContent() {
+  console.log('AppContent component is rendering');
   
   // Initialize offline sync
   useOfflineSync();
 
-  // Initialize analytics
+  // Initialize analytics (requires auth context)
   const analytics = useAnalytics();
-
-  // Initialize monitoring in production
-  useEffect(() => {
-    if (import.meta.env.PROD) {
-      monitoring.initialize().catch(console.error);
-    }
-  }, []);
 
   // Track route changes for analytics
   useEffect(() => {
@@ -91,10 +85,7 @@ function App() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SubscriptionProvider>
-          <Router>
+    <Router>
           <div className="min-h-screen bg-gray-50">
             <Routes>
               {/* Public routes with auth layout */}
@@ -271,6 +262,24 @@ function App() {
             <HelpWidget />
           </div>
           </Router>
+  );
+}
+
+function App() {
+  console.log('App component is rendering');
+  
+  // Initialize monitoring in production (doesn't require auth)
+  useEffect(() => {
+    if (import.meta.env.PROD) {
+      monitoring.initialize().catch(console.error);
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <AppContent />
         </SubscriptionProvider>
       </AuthProvider>
     </QueryClientProvider>
