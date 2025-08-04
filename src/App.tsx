@@ -64,6 +64,8 @@ const queryClient = new QueryClient({
 });
 
 function App() {
+  console.log('App component is rendering');
+  
   // Initialize offline sync
   useOfflineSync();
 
@@ -81,6 +83,12 @@ function App() {
   useEffect(() => {
     analytics.page();
   }, [analytics]);
+
+  // Debug current location
+  useEffect(() => {
+    console.log('Current URL:', window.location.href);
+    console.log('Current hash:', window.location.hash);
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>
