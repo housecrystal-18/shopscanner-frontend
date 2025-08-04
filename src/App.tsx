@@ -150,6 +150,10 @@ function AppContent() {
               
               <Route path="/blog" element={
                 <Layout>
+                  <div style={{padding: '20px', backgroundColor: 'lightblue', border: '3px solid blue'}}>
+                    <h1>BLOG ROUTE MATCHED!</h1>
+                    <p>If you see this, the /blog route is working</p>
+                  </div>
                   <BlogListPage />
                 </Layout>
               } />
