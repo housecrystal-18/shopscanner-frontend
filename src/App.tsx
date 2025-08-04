@@ -67,12 +67,16 @@ const queryClient = new QueryClient({
 function AppContent() {
   console.log('AppContent component is rendering');
   
-  // Temporarily disable hooks for debugging
-  // useOfflineSync();
-  // const analytics = useAnalytics();
-  // useEffect(() => {
-  //   analytics.page();
-  // }, [analytics]);
+  // Initialize offline sync
+  useOfflineSync();
+
+  // Initialize analytics (requires auth context)
+  const analytics = useAnalytics();
+
+  // Track route changes for analytics
+  useEffect(() => {
+    analytics.page();
+  }, [analytics]);
 
   // Debug current location
   useEffect(() => {
@@ -127,35 +131,9 @@ function AppContent() {
                 </Layout>
               } />
               
-              <Route path="/test" element={
-                <Layout>
-                  <div style={{padding: '50px', textAlign: 'center', backgroundColor: 'yellow'}}>
-                    <h1 style={{fontSize: '48px', color: 'red', border: '5px solid red'}}>TEST ROUTE WORKS!</h1>
-                    <p style={{fontSize: '24px', color: 'blue'}}>If you see this, React Router is working</p>
-                    <p>Current URL: {window.location.href}</p>
-                    <p>Current Hash: {window.location.hash}</p>
-                  </div>
-                </Layout>
-              } />
-              
-              <Route path="/simple-test" element={
-                <div style={{padding: '100px', backgroundColor: 'green', color: 'white', fontSize: '48px'}}>
-                  SIMPLE TEST PAGE - NO LAYOUT
-                </div>
-              } />
-              
               <Route path="/blog" element={
                 <Layout>
-                  <div className="min-h-screen bg-gray-50">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-                      <h1 className="text-4xl font-bold text-center mb-8">Blog</h1>
-                      <p className="text-center text-gray-600 mb-8">Educational content about e-commerce</p>
-                      <div className="bg-white rounded-lg shadow p-6">
-                        <h2 className="text-2xl font-bold mb-4">Test Blog Post</h2>
-                        <p>This is a minimal blog page without the complex BlogListPage component.</p>
-                      </div>
-                    </div>
-                  </div>
+                  <BlogListPage />
                 </Layout>
               } />
               
@@ -263,8 +241,8 @@ function AppContent() {
             {/* PWA Install Prompt */}
             <InstallPrompt />
 
-            {/* Help Widget - temporarily disabled for debugging */}
-            {/* <HelpWidget /> */}
+            {/* Help Widget */}
+            <HelpWidget />
           </div>
           </Router>
   );
