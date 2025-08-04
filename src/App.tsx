@@ -258,8 +258,8 @@ function AppContent() {
             {/* PWA Install Prompt */}
             <InstallPrompt />
 
-            {/* Help Widget */}
-            <HelpWidget />
+            {/* Help Widget - temporarily disabled for debugging */}
+            {/* <HelpWidget /> */}
           </div>
           </Router>
   );
