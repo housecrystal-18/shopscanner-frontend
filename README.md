@@ -219,3 +219,4 @@ Configure rate limits for different user tiers:
 ---
 
 Made with ❤️ by the Shop Scanner team
+# Force GitHub webhook trigger
