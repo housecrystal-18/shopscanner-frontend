@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+
+# Block access to private pages
+Disallow: /profile
+Disallow: /dashboard
+Disallow: /subscription
+Disallow: /wishlist
+Disallow: /scan
+Disallow: /analyze
+
+# Block access to API endpoints
+Disallow: /api/
+
+# Block access to admin areas
+Disallow: /admin/
+
+# Allow access to public assets
+Allow: /assets/
+Allow: /images/
+Allow: /icons/
+Allow: /_next/static/
+
+# Sitemap location
+Sitemap: https://shop-scan-pro.vercel.app/sitemap.xml
+
+# Crawl-delay for respectful crawling
+Crawl-delay: 1

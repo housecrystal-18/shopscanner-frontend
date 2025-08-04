@@ -9,7 +9,8 @@ import {
   X,
   ScanLine,
   LogOut,
-  Shield
+  Shield,
+  BookOpen
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { cn } from '../../lib/utils';
@@ -35,6 +36,7 @@ export function Header() {
 
   const navigation = [
     { name: 'Products', href: '/products', icon: ShoppingBag, requiresAuth: false },
+    { name: 'Blog', href: '/blog', icon: BookOpen, requiresAuth: false },
     { name: 'Scan', href: '/scan', icon: ScanLine, requiresAuth: true },
     { name: 'Analyze', href: '/analyze', icon: Shield, requiresAuth: true },
     { name: 'Pricing', href: '/pricing', icon: null },

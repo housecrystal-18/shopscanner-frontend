@@ -21,6 +21,8 @@ import { StoreAnalysisPage } from './pages/StoreAnalysisPage';
 import { PricingPage } from './pages/PricingPage';
 import { SubscriptionPage } from './pages/SubscriptionPage';
 import { SupportPage } from './pages/SupportPage';
+import { BlogListPage } from './pages/blog/BlogListPage';
+import { BlogPostPage } from './pages/blog/BlogPostPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
 // Providers
@@ -127,6 +129,18 @@ function App() {
               <Route path="/support" element={
                 <Layout>
                   <SupportPage />
+                </Layout>
+              } />
+              
+              <Route path="/blog" element={
+                <Layout>
+                  <BlogListPage />
+                </Layout>
+              } />
+              
+              <Route path="/blog/:slug" element={
+                <Layout>
+                  <BlogPostPage />
                 </Layout>
               } />
 
