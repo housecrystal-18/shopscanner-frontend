@@ -66,7 +66,7 @@ export function Header() {
               <div className="w-9 h-9 bg-gradient-to-tr from-primary-500 to-primary-600 rounded-lg flex items-center justify-center">
                 <ScanLine className="h-5 w-5 text-white" />
               </div>
-              <span className="text-lg font-semibold text-gray-900 hidden sm:block">Shop Scanner</span>
+              <span className="text-lg font-semibold text-gray-900 hidden sm:block">Shop Scan Pro</span>
             </Link>
           </div>
 

@@ -403,7 +403,7 @@ export function PricingPage() {
               Ready to Get Started?
             </h3>
             <p className="text-gray-600 mb-6 md:mb-8 text-sm md:text-base">
-              Join thousands of users who trust Shop Scanner for product verification and price comparison.
+              Join thousands of users who trust Shop Scan Pro for product verification and price comparison.
             </p>
             
             {!isAuthenticated ? (

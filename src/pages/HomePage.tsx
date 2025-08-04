@@ -169,7 +169,7 @@ export function HomePage() {
               Ready to start shopping smarter?
             </h2>
             <p className="text-lg md:text-xl text-primary-100 mb-8 leading-relaxed">
-              Join thousands of users who trust Shop Scanner to verify products and protect them from fraud.
+              Join thousands of users who trust Shop Scan Pro to verify products and protect them from fraud.
             </p>
             {!isAuthenticated && (
               <Link
