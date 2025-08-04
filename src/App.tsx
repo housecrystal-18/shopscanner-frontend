@@ -145,12 +145,14 @@ function AppContent() {
               } />
               
               <Route path="/blog" element={
-                <div style={{padding: '50px', backgroundColor: 'lightgreen', color: 'black', fontSize: '24px'}}>
-                  <h1>✅ BLOG ROUTE WORKS!</h1>
-                  <p>This is a minimal test without Layout or BlogListPage</p>
-                  <p>Current URL: {window.location.href}</p>
-                  <p>Current Hash: {window.location.hash}</p>
-                </div>
+                <Layout>
+                  <div style={{padding: '50px', backgroundColor: 'lightgreen', color: 'black', fontSize: '24px'}}>
+                    <h1>✅ BLOG ROUTE WORKS WITH LAYOUT!</h1>
+                    <p>This tests if Layout component works</p>
+                    <p>Current URL: {window.location.href}</p>
+                    <p>Current Hash: {window.location.hash}</p>
+                  </div>
+                </Layout>
               } />
               
               <Route path="/blog/:slug" element={
