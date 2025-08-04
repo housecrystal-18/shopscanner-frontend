@@ -1,14 +1,5 @@
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-
-// Debug component to log location changes
-function LocationLogger() {
-  const location = useLocation();
-  console.log('Current location:', location);
-  console.log('Pathname:', location.pathname);
-  console.log('Hash:', location.hash);
-  return null;
-}
+import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
@@ -105,7 +96,6 @@ function App() {
         <SubscriptionProvider>
           <Router>
           <div className="min-h-screen bg-gray-50">
-            <LocationLogger />
             <Routes>
               {/* Public routes with auth layout */}
               <Route path="/login" element={
