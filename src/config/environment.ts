@@ -219,6 +219,9 @@ export function validateEnvironment(): void {
       stripeWebhookSecret: config.stripeWebhookSecret ? '[REDACTED]' : undefined
     });
   }
+  
+  // Always log mock API status for debugging
+  console.log('🔧 Mock API enabled:', config.mockApi);
 }
 
 // Environment-specific configurations

@@ -2,6 +2,9 @@ import axios, { AxiosResponse } from 'axios';
 import { config } from '../config/environment';
 import { mockApi } from '../services/mockApi';
 
+// Debug mock API status
+console.log('🔧 API Configuration - Mock API enabled:', config.mockApi);
+
 const API_BASE_URL = config.apiBaseUrl;
 
 // Create axios instance
@@ -157,20 +160,32 @@ export interface BarcodeResult {
 
 // Auth API
 export const authAPI = {
-  register: (data: {
+  register: async (data: {
     name: string;
     email: string;
     password: string;
     type: 'consumer' | 'business';
     businessName?: string;
-  }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> =>
-    config.mockApi ? Promise.resolve({ data: mockApi.auth.register(data) } as any) : api.post('/auth/register', data),
+  }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> => {
+    if (config.mockApi) {
+      console.log('🔧 Using mock API for register:', data.email);
+      const mockResult = await mockApi.auth.register(data);
+      return { data: mockResult } as any;
+    }
+    return api.post('/auth/register', data);
+  },
 
-  login: (data: {
+  login: async (data: {
     email: string;
     password: string;
-  }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> =>
-    config.mockApi ? Promise.resolve({ data: mockApi.auth.login(data.email, data.password) } as any) : api.post('/auth/login', data),
+  }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> => {
+    if (config.mockApi) {
+      console.log('🔧 Using mock API for login:', data.email);
+      const mockResult = await mockApi.auth.login(data.email, data.password);
+      return { data: mockResult } as any;
+    }
+    return api.post('/auth/login', data);
+  },
 
   me: (): Promise<AxiosResponse<{ success: boolean; user: User }>> =>
     api.get('/auth/me'),
