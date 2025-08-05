@@ -24,6 +24,8 @@ import { SupportPage } from './pages/SupportPage';
 import { BlogListPage } from './pages/blog/BlogListPage';
 import { BlogPostPage } from './pages/blog/BlogPostPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { BlogListPage } from './pages/blog/BlogListPage';
+import { BlogPostPage } from './pages/blog/BlogPostPage';
 
 // Providers
 import { AuthProvider } from './contexts/AuthContext';
