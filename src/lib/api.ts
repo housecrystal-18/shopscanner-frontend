@@ -179,11 +179,22 @@ export const authAPI = {
     email: string;
     password: string;
   }): Promise<AxiosResponse<{ success: boolean; token: string; user: User }>> => {
+    console.log('🚀 AUTH API LOGIN - Mock API status:', config.mockApi);
+    console.log('🚀 AUTH API LOGIN - Data:', data);
+    
     if (config.mockApi) {
-      console.log('🔧 Using mock API for login:', data.email);
-      const mockResult = await mockApi.auth.login(data.email, data.password);
-      return { data: mockResult } as any;
+      console.log('✅ Using mock API for login:', data.email);
+      try {
+        const mockResult = await mockApi.auth.login(data.email, data.password);
+        console.log('✅ Mock login result:', mockResult);
+        return { data: mockResult } as any;
+      } catch (error) {
+        console.error('❌ Mock login error:', error);
+        throw error;
+      }
     }
+    
+    console.log('❌ Using real API for login - this should not happen in demo mode');
     return api.post('/auth/login', data);
   },
 

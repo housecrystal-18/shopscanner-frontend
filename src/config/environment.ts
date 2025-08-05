@@ -139,8 +139,8 @@ export const config: EnvironmentConfig = {
   enableRateLimiting: getEnvBoolean('VITE_ENABLE_RATE_LIMITING', true),
   
   // Development  
-  debugMode: getEnvBoolean('VITE_DEBUG_MODE', false),
-  mockApi: getEnvBoolean('VITE_MOCK_API', true), // Enable mock API for demo
+  debugMode: true, // Force enable debug mode
+  mockApi: true, // Force enable mock API for demo
   logLevel: 'info',
   
   // AWS

@@ -64,7 +64,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
+      console.log('🔐 AuthContext login called with:', email);
       const response = await authAPI.login({ email, password });
+      console.log('🔐 AuthContext login response:', response);
       
       if (response.data.success) {
         const { token: newToken, user: userData } = response.data;
