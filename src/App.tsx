@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Toaster } from 'react-hot-toast';
 
@@ -24,8 +24,6 @@ import { SupportPage } from './pages/SupportPage';
 import { BlogListPage } from './pages/blog/BlogListPage';
 import { BlogPostPage } from './pages/blog/BlogPostPage';
 import { NotFoundPage } from './pages/NotFoundPage';
-import { BlogListPage } from './pages/blog/BlogListPage';
-import { BlogPostPage } from './pages/blog/BlogPostPage';
 
 // Providers
 import { AuthProvider } from './contexts/AuthContext';
@@ -65,28 +63,29 @@ const queryClient = new QueryClient({
   },
 });
 
-// Inner app component that uses auth-dependent hooks
-function AppContent() {
-  console.log('AppContent component is rendering');
-  
+function App() {
   // Initialize offline sync
   useOfflineSync();
 
-  // Initialize analytics (requires auth context)
+  // Initialize analytics
   const analytics = useAnalytics();
+
+  // Initialize monitoring in production
+  useEffect(() => {
+    if (import.meta.env.PROD) {
+      monitoring.initialize().catch(console.error);
+    }
+  }, []);
 
   // Track route changes for analytics
   useEffect(() => {
     analytics.page();
   }, [analytics]);
 
-  // Debug current location
-  useEffect(() => {
-    console.log('Current URL:', window.location.href);
-    console.log('Current hash:', window.location.hash);
-  }, []);
-
   return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SubscriptionProvider>
     <Router>
           <div className="min-h-screen bg-gray-50">
             <Routes>
@@ -247,24 +246,6 @@ function AppContent() {
             <HelpWidget />
           </div>
           </Router>
-  );
-}
-
-function App() {
-  console.log('App component is rendering');
-  
-  // Initialize monitoring in production (doesn't require auth)
-  useEffect(() => {
-    if (import.meta.env.PROD) {
-      monitoring.initialize().catch(console.error);
-    }
-  }, []);
-
-  return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SubscriptionProvider>
-          <AppContent />
         </SubscriptionProvider>
       </AuthProvider>
     </QueryClientProvider>
