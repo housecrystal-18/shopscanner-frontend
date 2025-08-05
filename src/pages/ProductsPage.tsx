@@ -36,7 +36,13 @@ export function ProductsPage() {
   } = useProductSearch();
 
   // Show upgrade prompt for free users
-  const showUpgradePrompt = !canSearch && remainingSearches !== 'unlimited';
+  const showUpgradePrompt = !canSearch && remainingSearches !== Infinity;
+  
+  // Handle wishlist toggle
+  const handleWishlistToggle = (productId: string, isAdded: boolean) => {
+    // This would normally trigger a re-fetch or update local state
+    console.log(`Product ${productId} ${isAdded ? 'added to' : 'removed from'} wishlist`);
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -55,10 +61,10 @@ export function ProductsPage() {
             
             {isAuthenticated && (
               <div className="hidden md:flex items-center space-x-4 text-sm">
-                {remainingSearches !== 'unlimited' && (
+                {remainingSearches !== Infinity && (
                   <div className="bg-white px-4 py-2 rounded-lg border border-gray-200">
                     <span className="text-gray-600">Searches remaining: </span>
-                    <span className="font-semibold text-primary-600">
+                    <span className={`font-semibold ${remainingSearches > 5 ? 'text-primary-600' : 'text-red-600'}`}>
                       {remainingSearches}
                     </span>
                   </div>
@@ -192,7 +198,7 @@ export function ProductsPage() {
             isLoading={isLoading}
             searchResult={searchResult}
             onPageChange={setPage}
-            showPriceComparison={true}
+            onWishlistToggle={handleWishlistToggle}
             emptyState={
               isSearchActive ? (
                 <div className="max-w-md mx-auto">

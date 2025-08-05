@@ -53,45 +53,170 @@ export const mockApi = {
         {
           id: '1',
           name: 'iPhone 15 Pro',
+          description: 'Latest iPhone with Pro features and titanium design',
           brand: 'Apple',
-          price: { current: 999.99, currency: 'USD' },
           category: 'Electronics',
-          authenticity: { score: 95, verified: true, productType: 'authentic' },
-          images: [{ url: 'https://via.placeholder.com/300x300?text=iPhone+15', isPrimary: true }],
-          description: 'Latest iPhone with Pro features'
+          subcategory: 'Smartphones',
+          price: { 
+            current: 999.99, 
+            original: 1099.99,
+            currency: 'USD',
+            lastUpdated: new Date().toISOString()
+          },
+          priceHistory: [
+            { date: '2024-01-01', price: 1099.99, store: 'Apple Store' },
+            { date: '2024-01-15', price: 999.99, store: 'Apple Store' }
+          ],
+          images: [{ 
+            url: 'https://via.placeholder.com/300x300?text=iPhone+15+Pro', 
+            alt: 'iPhone 15 Pro',
+            isPrimary: true 
+          }],
+          availability: {
+            inStock: true,
+            quantity: 50,
+            status: 'in_stock'
+          },
+          storeAvailability: [
+            { storeName: 'Apple Store', price: 999.99, inStock: true, lastChecked: new Date().toISOString() },
+            { storeName: 'Best Buy', price: 1049.99, inStock: true, lastChecked: new Date().toISOString() }
+          ],
+          seller: {
+            businessName: 'Apple Inc.',
+            contactInfo: { email: 'contact@apple.com' }
+          },
+          authenticity: { 
+            score: 95, 
+            verified: true, 
+            productType: 'authentic',
+            flags: []
+          },
+          ratings: { average: 4.8, count: 1250 },
+          views: 15420,
+          isActive: true,
+          featured: true,
+          tags: ['premium', 'latest', 'smartphone'],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         {
           id: '2',
           name: 'Nike Air Max 90',
+          description: 'Classic Nike sneakers with Air cushioning technology',
           brand: 'Nike',
-          price: { current: 120.00, currency: 'USD' },
           category: 'Footwear',
-          authenticity: { score: 88, verified: true, productType: 'authentic' },
-          images: [{ url: 'https://via.placeholder.com/300x300?text=Nike+Air+Max', isPrimary: true }],
-          description: 'Classic Nike sneakers'
+          subcategory: 'Sneakers',
+          price: { 
+            current: 120.00, 
+            currency: 'USD',
+            lastUpdated: new Date().toISOString()
+          },
+          images: [{ 
+            url: 'https://via.placeholder.com/300x300?text=Nike+Air+Max+90', 
+            alt: 'Nike Air Max 90',
+            isPrimary: true 
+          }],
+          availability: {
+            inStock: true,
+            quantity: 25,
+            status: 'limited'
+          },
+          seller: {
+            businessName: 'Nike',
+            contactInfo: { email: 'contact@nike.com' }
+          },
+          authenticity: { 
+            score: 88, 
+            verified: true, 
+            productType: 'authentic',
+            flags: []
+          },
+          ratings: { average: 4.5, count: 890 },
+          views: 8320,
+          isActive: true,
+          featured: false,
+          tags: ['classic', 'comfortable', 'athletic'],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         },
         {
           id: '3',
-          name: 'Samsung Galaxy Watch',
+          name: 'Samsung Galaxy Watch 6',
+          description: 'Advanced smartwatch with health tracking and GPS',
           brand: 'Samsung',
-          price: { current: 249.99, currency: 'USD' },
           category: 'Electronics',
-          authenticity: { score: 75, verified: false, productType: 'unknown' },
-          images: [{ url: 'https://via.placeholder.com/300x300?text=Galaxy+Watch', isPrimary: true }],
-          description: 'Smart watch with health tracking'
+          subcategory: 'Wearables',
+          price: { 
+            current: 249.99, 
+            currency: 'USD',
+            lastUpdated: new Date().toISOString()
+          },
+          images: [{ 
+            url: 'https://via.placeholder.com/300x300?text=Galaxy+Watch+6', 
+            alt: 'Samsung Galaxy Watch 6',
+            isPrimary: true 
+          }],
+          availability: {
+            inStock: false,
+            quantity: 0,
+            status: 'out_of_stock'
+          },
+          seller: {
+            businessName: 'Samsung',
+            contactInfo: { email: 'contact@samsung.com' }
+          },
+          authenticity: { 
+            score: 75, 
+            verified: false, 
+            productType: 'unknown',
+            flags: [
+              { type: 'missing_info', severity: 'low', description: 'Limited verification data available' }
+            ]
+          },
+          ratings: { average: 4.2, count: 450 },
+          views: 5230,
+          isActive: true,
+          featured: false,
+          tags: ['smartwatch', 'fitness', 'android'],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
         }
       ];
 
       return {
         success: true,
-        data: mockProducts,
-        pagination: {
-          page: 1,
-          limit: 20,
-          total: mockProducts.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false
+        data: {
+          products: mockProducts,
+          pagination: {
+            page: 1,
+            limit: 20,
+            total: mockProducts.length,
+            totalPages: 1,
+            hasNext: false,
+            hasPrev: false
+          },
+          filters: {
+            availableCategories: [
+              { name: 'Electronics', count: 2 },
+              { name: 'Footwear', count: 1 }
+            ],
+            availableBrands: [
+              { name: 'Apple', count: 1 },
+              { name: 'Nike', count: 1 },
+              { name: 'Samsung', count: 1 }
+            ],
+            priceRange: { min: 120, max: 999.99 },
+            availableStores: [
+              { name: 'Apple Store', count: 1 },
+              { name: 'Best Buy', count: 1 }
+            ]
+          },
+          searchMetadata: {
+            query: params.search || '',
+            resultsFound: mockProducts.length,
+            searchTime: 850,
+            suggestions: []
+          }
         }
       };
     },

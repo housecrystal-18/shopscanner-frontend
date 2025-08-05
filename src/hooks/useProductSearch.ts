@@ -1,50 +1,156 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { api } from '../lib/api';
-import { ProductSearchParams, ProductSearchResult, ProductFilter, ProductSort } from '../types/product';
+import { useAuth } from '../contexts/AuthContext';
 import { useSubscription } from '../contexts/SubscriptionContext';
-import { toast } from 'react-hot-toast';
+import { productsAPI } from '../lib/api';
+import { 
+  ProductSearchParams, 
+  ProductSearchResult, 
+  ProductFilter, 
+  ProductSort,
+  SearchUsage 
+} from '../types/product';
+import toast from 'react-hot-toast';
+
+// Custom hook for debouncing values
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
+const defaultSearchParams: ProductSearchParams = {
+  query: '',
+  page: 1,
+  limit: 20,
+  sort: { field: 'name', order: 'asc' },
+  filters: {}
+};
 
 export function useProductSearch() {
-  const [searchParams, setSearchParams] = useState<ProductSearchParams>({
-    query: '',
-    page: 1,
-    limit: 12,
-  });
-  const { canUseFeature, incrementUsage, getRemainingUsage } = useSubscription();
+  const { isAuthenticated, user } = useAuth();
+  const { canUseFeature, incrementUsage, getRemainingUsage, subscription } = useSubscription();
+  
+  const [searchParams, setSearchParams] = useState<ProductSearchParams>(defaultSearchParams);
+  
+  // Debounce search query to avoid too many API calls
+  const debouncedQuery = useDebounce(searchParams.query || '', 300);
+  
+  // Usage tracking state
+  const [usage, setUsage] = useState<SearchUsage | null>(null);
 
-  // Search products query
+  // Create stable search parameters for React Query
+  const stableSearchParams = useMemo(() => ({
+    ...searchParams,
+    query: debouncedQuery,
+  }), [searchParams, debouncedQuery]);
+
+  // Check if user can perform search based on subscription limits
+  const canSearch = useMemo(() => {
+    if (!isAuthenticated) return true; // Public searches allowed
+    return canUseFeature('crossPlatformSearch');
+  }, [isAuthenticated, canUseFeature]);
+
+  const remainingSearches = useMemo(() => {
+    if (!isAuthenticated) return Infinity;
+    return getRemainingUsage('crossPlatformSearch');
+  }, [isAuthenticated, getRemainingUsage]);
+
+  // React Query for product search
   const {
     data: searchResult,
     isLoading,
+    isError,
     error,
-    refetch,
+    refetch
   } = useQuery({
-    queryKey: ['products', 'search', searchParams],
+    queryKey: ['productSearchEnhanced', stableSearchParams],
     queryFn: async (): Promise<ProductSearchResult> => {
-      // Check usage limits for search (using crossPlatformSearch feature)
-      if (!canUseFeature('crossPlatformSearch')) {
-        const remaining = getRemainingUsage('crossPlatformSearch');
-        throw new Error(`Search limit reached. You have ${remaining} searches remaining this month.`);
+      // Check search limits before making request
+      if (isAuthenticated && !canSearch) {
+        throw new Error('Search limit exceeded. Please upgrade your plan to continue searching.');
       }
-
+      
       try {
-        // Increment usage
-        await incrementUsage('crossPlatformSearch');
-
-        const response = await api.get('/api/products/search', {
-          params: searchParams,
+        const response = await productsAPI.getProducts({
+          search: stableSearchParams.query,
+          page: stableSearchParams.page,
+          limit: stableSearchParams.limit,
+          category: stableSearchParams.filters?.category,
+          subcategory: stableSearchParams.filters?.subcategory,
+          brand: stableSearchParams.filters?.brand,
+          minPrice: stableSearchParams.filters?.minPrice,
+          maxPrice: stableSearchParams.filters?.maxPrice,
+          inStock: stableSearchParams.filters?.inStock,
+          featured: stableSearchParams.filters?.featured,
+          sortBy: stableSearchParams.sort?.field,
+          sortOrder: stableSearchParams.sort?.order,
         });
-        return response.data;
-      } catch (error: any) {
-        if (error.response?.status === 429) {
-          throw new Error('Search limit reached. Please upgrade your plan.');
+        
+        // Track usage if user is authenticated and query is not empty
+        if (isAuthenticated && stableSearchParams.query) {
+          await incrementUsage('crossPlatformSearch');
+          
+          // Update local usage state
+          setUsage(prev => prev ? {
+            ...prev,
+            searchesUsed: prev.searchesUsed + 1
+          } : null);
         }
+        
+        // Transform API response to match our interface
+        const result: ProductSearchResult = {
+          products: response.data.data || [],
+          pagination: {
+            page: response.data.pagination?.page || 1,
+            limit: response.data.pagination?.limit || 20,
+            total: response.data.pagination?.total || 0,
+            totalPages: response.data.pagination?.totalPages || 0,
+            hasNext: response.data.pagination?.hasNext || false,
+            hasPrev: response.data.pagination?.hasPrev || false,
+          },
+          filters: {
+            availableCategories: response.data.filters?.categories || [],
+            availableBrands: response.data.filters?.brands || [],
+            priceRange: response.data.filters?.priceRange || { min: 0, max: 1000 },
+            availableStores: response.data.filters?.stores || [],
+          },
+          searchMetadata: {
+            query: stableSearchParams.query,
+            resultsFound: response.data.pagination?.total || 0,
+            searchTime: Date.now(),
+            suggestions: response.data.suggestions || [],
+          }
+        };
+        
+        return result;
+      } catch (error: any) {
+        console.error('Product search error:', error);
+        
+        if (error.message.includes('limit exceeded')) {
+          toast.error('Search limit reached. Upgrade your plan to continue searching.');
+        }
+        
         throw error;
       }
     },
-    enabled: !!searchParams.query || Object.keys(searchParams.filters || {}).length > 0,
-    staleTime: 1000 * 60 * 2, // 2 minutes
+    enabled: stableSearchParams.query !== '' || Object.keys(stableSearchParams.filters || {}).length > 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+    retry: (failureCount, error: any) => {
+      if (error?.message?.includes('limit exceeded')) return false;
+      return failureCount < 2;
+    },
   });
 
   // Update search query
@@ -84,11 +190,7 @@ export function useProductSearch() {
 
   // Clear all filters and search
   const clearSearch = useCallback(() => {
-    setSearchParams({
-      query: '',
-      page: 1,
-      limit: 12,
-    });
+    setSearchParams(defaultSearchParams);
   }, []);
 
   // Get popular/recent products (for initial page load)
@@ -117,37 +219,41 @@ export function useProductSearch() {
     staleTime: 1000 * 60 * 30, // 30 minutes
   });
 
-  // Memoized results
-  const products = useMemo(() => {
-    if (searchResult) return searchResult.products;
-    if (popularProducts) return popularProducts;
-    return [];
-  }, [searchResult, popularProducts]);
 
-  const hasResults = products.length > 0;
-  const isSearchActive = !!(searchParams.query || searchParams.filters);
+  // Load initial usage data
+  useEffect(() => {
+    if (isAuthenticated && subscription) {
+      const plan = user?.plan || 'free';
+      const limits = {
+        free: 10,
+        premium: 100,
+        annual: 1000
+      };
+      
+      setUsage({
+        searchesUsed: subscription.usage?.crossPlatformSearch || 0,
+        searchLimit: limits[plan],
+        resetDate: subscription.currentPeriodEnd || '',
+        plan
+      });
+    }
+  }, [isAuthenticated, subscription, user]);
+
+  // Helper computed values 
+  const hasResults = Boolean(searchResult?.products?.length || popularProducts?.length);
+  const isEmpty = !isLoading && !hasResults && !isLoadingPopular;
+  const totalResults = searchResult?.pagination?.total || 0;
+  const isSearchActive = Boolean(searchParams.query || Object.keys(searchParams.filters || {}).length > 0);
 
   return {
     // Search state
     searchParams,
-    query: searchParams.query || '',
-    filters: searchParams.filters,
-    sort: searchParams.sort,
-    page: searchParams.page || 1,
-    
-    // Results
-    products,
     searchResult,
-    popularProducts,
-    categories: categories || [],
-    hasResults,
-    isSearchActive,
+    isLoading,
+    isError,
+    error: error as Error | null,
     
-    // Loading states
-    isLoading: isLoading || isLoadingPopular,
-    error,
-    
-    // Actions
+    // Search functions
     setQuery,
     setFilters,
     setSort,
@@ -155,8 +261,26 @@ export function useProductSearch() {
     clearSearch,
     refetch,
     
-    // Usage info
-    canSearch: canUseFeature('crossPlatformSearch'),
-    remainingSearches: getRemainingUsage('crossPlatformSearch'),
+    // Results and data
+    products: searchResult?.products || popularProducts || [],
+    popularProducts,
+    categories: categories || [],
+    
+    // Usage tracking
+    usage,
+    canSearch,
+    remainingSearches,
+    
+    // Helper computed values
+    hasResults,
+    isEmpty,
+    totalResults,
+    isSearchActive,
+    
+    // Additional states
+    query: searchParams.query || '',
+    filters: searchParams.filters,
+    sort: searchParams.sort,
+    page: searchParams.page || 1,
   };
 }

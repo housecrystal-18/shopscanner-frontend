@@ -15,8 +15,9 @@ interface ProductGridProps {
   isLoading?: boolean;
   searchResult?: ProductSearchResult;
   onPageChange?: (page: number) => void;
-  showPriceComparison?: boolean;
+  onWishlistToggle?: (productId: string, isAdded: boolean) => void;
   emptyState?: React.ReactNode;
+  className?: string;
 }
 
 export function ProductGrid({
@@ -24,8 +25,9 @@ export function ProductGrid({
   isLoading = false,
   searchResult,
   onPageChange,
-  showPriceComparison = false,
+  onWishlistToggle,
   emptyState,
+  className,
 }: ProductGridProps) {
   if (isLoading) {
     return (
@@ -77,35 +79,42 @@ export function ProductGrid({
       {/* Results Info */}
       {searchResult && (
         <div className="flex items-center justify-between text-sm text-gray-600">
-          <span>
-            Showing {((searchResult.page - 1) * searchResult.limit) + 1}-{Math.min(searchResult.page * searchResult.limit, searchResult.total)} of {searchResult.total} products
-          </span>
-          {searchResult.totalPages > 1 && (
+          <div className="flex items-center gap-4">
             <span>
-              Page {searchResult.page} of {searchResult.totalPages}
+              Showing {((searchResult.pagination.page - 1) * searchResult.pagination.limit) + 1}-{Math.min(searchResult.pagination.page * searchResult.pagination.limit, searchResult.pagination.total)} of {searchResult.pagination.total.toLocaleString()} products
+            </span>
+            {searchResult.searchMetadata.searchTime && (
+              <span className="text-xs text-gray-500">
+                ({(searchResult.searchMetadata.searchTime / 1000).toFixed(2)}s)
+              </span>
+            )}
+          </div>
+          {searchResult.pagination.totalPages > 1 && (
+            <span>
+              Page {searchResult.pagination.page} of {searchResult.pagination.totalPages}
             </span>
           )}
         </div>
       )}
 
       {/* Product Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${className || ''}`}>
         {products.map((product) => (
           <ProductCard
             key={product.id}
             product={product}
-            showPriceComparison={showPriceComparison}
+            onWishlistToggle={onWishlistToggle}
           />
         ))}
       </div>
 
       {/* Pagination */}
-      {searchResult && searchResult.totalPages > 1 && onPageChange && (
+      {searchResult && searchResult.pagination.totalPages > 1 && onPageChange && (
         <div className="flex items-center justify-center space-x-2">
           <button
-            onClick={() => onPageChange(searchResult.page - 1)}
-            disabled={searchResult.page <= 1}
-            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => onPageChange(searchResult.pagination.page - 1)}
+            disabled={!searchResult.pagination.hasPrev}
+            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             <ChevronLeft className="h-4 w-4 mr-1" />
             Previous
@@ -113,32 +122,32 @@ export function ProductGrid({
 
           <div className="flex items-center space-x-1">
             {/* First page */}
-            {searchResult.page > 3 && (
+            {searchResult.pagination.page > 3 && (
               <>
                 <button
                   onClick={() => onPageChange(1)}
-                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 >
                   1
                 </button>
-                {searchResult.page > 4 && (
+                {searchResult.pagination.page > 4 && (
                   <span className="px-2 text-gray-400">...</span>
                 )}
               </>
             )}
 
             {/* Current page range */}
-            {Array.from({ length: Math.min(5, searchResult.totalPages) }, (_, i) => {
-              const page = Math.max(1, Math.min(searchResult.totalPages - 4, searchResult.page - 2)) + i;
-              if (page > searchResult.totalPages) return null;
+            {Array.from({ length: Math.min(5, searchResult.pagination.totalPages) }, (_, i) => {
+              const page = Math.max(1, Math.min(searchResult.pagination.totalPages - 4, searchResult.pagination.page - 2)) + i;
+              if (page > searchResult.pagination.totalPages) return null;
               
               return (
                 <button
                   key={page}
                   onClick={() => onPageChange(page)}
-                  className={`px-3 py-2 text-sm rounded-lg ${
-                    page === searchResult.page
-                      ? 'bg-primary-600 text-white'
+                  className={`px-3 py-2 text-sm rounded-lg transition-colors ${
+                    page === searchResult.pagination.page
+                      ? 'bg-primary-600 text-white shadow-sm'
                       : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                   }`}
                 >
@@ -148,25 +157,25 @@ export function ProductGrid({
             })}
 
             {/* Last page */}
-            {searchResult.page < searchResult.totalPages - 2 && (
+            {searchResult.pagination.page < searchResult.pagination.totalPages - 2 && (
               <>
-                {searchResult.page < searchResult.totalPages - 3 && (
+                {searchResult.pagination.page < searchResult.pagination.totalPages - 3 && (
                   <span className="px-2 text-gray-400">...</span>
                 )}
                 <button
-                  onClick={() => onPageChange(searchResult.totalPages)}
-                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg"
+                  onClick={() => onPageChange(searchResult.pagination.totalPages)}
+                  className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  {searchResult.totalPages}
+                  {searchResult.pagination.totalPages}
                 </button>
               </>
             )}
           </div>
 
           <button
-            onClick={() => onPageChange(searchResult.page + 1)}
-            disabled={searchResult.page >= searchResult.totalPages}
-            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={() => onPageChange(searchResult.pagination.page + 1)}
+            disabled={!searchResult.pagination.hasNext}
+            className="flex items-center px-3 py-2 text-sm text-gray-600 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             Next
             <ChevronRight className="h-4 w-4 ml-1" />

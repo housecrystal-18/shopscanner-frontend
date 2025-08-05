@@ -53,6 +53,8 @@ export function ProductSearch({
     { field: 'category', label: 'Category' },
     { field: 'createdAt', label: 'Date Added' },
     { field: 'authenticity', label: 'Authenticity Score' },
+    { field: 'ratings', label: 'Customer Rating' },
+    { field: 'views', label: 'Popularity' },
   ] as const;
 
   return (
@@ -108,7 +110,7 @@ export function ProductSearch({
                   : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
               }`}
             >
-              {sort?.direction === 'desc' ? <SortDesc className="h-4 w-4" /> : <SortAsc className="h-4 w-4" />}
+              {sort?.order === 'desc' ? <SortDesc className="h-4 w-4" /> : <SortAsc className="h-4 w-4" />}
               <span className="hidden sm:inline">Sort</span>
               <ChevronDown className="h-4 w-4" />
             </button>
@@ -123,7 +125,7 @@ export function ProductSearch({
                         onClick={() => {
                           onSortChange({
                             field: option.field,
-                            direction: sort?.field === option.field && sort?.direction === 'asc' ? 'desc' : 'asc'
+                            order: sort?.field === option.field && sort?.order === 'asc' ? 'desc' : 'asc'
                           });
                           setShowSort(false);
                         }}
@@ -137,7 +139,7 @@ export function ProductSearch({
                       </button>
                       {sort?.field === option.field && (
                         <div className="px-2">
-                          {sort.direction === 'asc' ? (
+                          {sort.order === 'asc' ? (
                             <SortAsc className="h-4 w-4 text-primary-600" />
                           ) : (
                             <SortDesc className="h-4 w-4 text-primary-600" />
@@ -168,7 +170,7 @@ export function ProductSearch({
       {/* Filter Panel */}
       {showFilters && (
         <div className="border-t border-gray-200 pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Category Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -188,6 +190,20 @@ export function ProductSearch({
               </select>
             </div>
 
+            {/* Brand Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Brand
+              </label>
+              <input
+                type="text"
+                placeholder="Any brand"
+                value={filters?.brand || ''}
+                onChange={(e) => handleFilterChange('brand', e.target.value || undefined)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              />
+            </div>
+
             {/* Price Range Filter */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -197,13 +213,10 @@ export function ProductSearch({
                 <input
                   type="number"
                   placeholder="Min"
-                  value={filters?.priceRange?.min || ''}
+                  value={filters?.minPrice || ''}
                   onChange={(e) => {
-                    const min = e.target.value ? parseFloat(e.target.value) : undefined;
-                    handleFilterChange('priceRange', {
-                      ...filters?.priceRange,
-                      min,
-                    });
+                    const minPrice = e.target.value ? parseFloat(e.target.value) : undefined;
+                    handleFilterChange('minPrice', minPrice);
                   }}
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
@@ -211,20 +224,58 @@ export function ProductSearch({
                 <input
                   type="number"
                   placeholder="Max"
-                  value={filters?.priceRange?.max || ''}
+                  value={filters?.maxPrice || ''}
                   onChange={(e) => {
-                    const max = e.target.value ? parseFloat(e.target.value) : undefined;
-                    handleFilterChange('priceRange', {
-                      ...filters?.priceRange,
-                      max,
-                    });
+                    const maxPrice = e.target.value ? parseFloat(e.target.value) : undefined;
+                    handleFilterChange('maxPrice', maxPrice);
                   }}
                   className="flex-1 border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </div>
             </div>
 
-            {/* Availability & Verification Filters */}
+            {/* Authenticity Score Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Min Authenticity Score
+              </label>
+              <select
+                value={filters?.minAuthenticityScore || ''}
+                onChange={(e) => {
+                  const score = e.target.value ? parseInt(e.target.value) : undefined;
+                  handleFilterChange('minAuthenticityScore', score);
+                }}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Any score</option>
+                <option value="90">90%+ (Excellent)</option>
+                <option value="80">80%+ (Very Good)</option>
+                <option value="70">70%+ (Good)</option>
+                <option value="60">60%+ (Fair)</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Additional Filters Row */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            {/* Product Type Filter */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product Type
+              </label>
+              <select
+                value={filters?.productType || ''}
+                onChange={(e) => handleFilterChange('productType', e.target.value || undefined)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              >
+                <option value="">Any type</option>
+                <option value="authentic">Authentic</option>
+                <option value="unknown">Unknown</option>
+                <option value="counterfeit">Counterfeit Risk</option>
+              </select>
+            </div>
+
+            {/* Checkbox Filters */}
             <div className="space-y-3">
               <div>
                 <label className="flex items-center">
@@ -247,6 +298,55 @@ export function ProductSearch({
                   />
                   <span className="ml-2 text-sm text-gray-700">Verified authentic</span>
                 </label>
+              </div>
+              <div>
+                <label className="flex items-center">
+                  <input
+                    type="checkbox"
+                    checked={filters?.featured || false}
+                    onChange={(e) => handleFilterChange('featured', e.target.checked || undefined)}
+                    className="h-4 w-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                  />
+                  <span className="ml-2 text-sm text-gray-700">Featured products</span>
+                </label>
+              </div>
+            </div>
+
+            {/* Active Filter Tags */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Active Filters
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {hasActiveFilters && Object.entries(filters || {}).map(([key, value]) => {
+                  if (!value) return null;
+                  
+                  const getFilterLabel = () => {
+                    switch (key) {
+                      case 'category': return `Category: ${value}`;
+                      case 'brand': return `Brand: ${value}`;
+                      case 'minPrice': return `Min: $${value}`;
+                      case 'maxPrice': return `Max: $${value}`;
+                      case 'minAuthenticityScore': return `Auth: ${value}%+`;
+                      case 'productType': return `Type: ${value}`;
+                      case 'inStock': return 'In Stock';
+                      case 'verified': return 'Verified';
+                      case 'featured': return 'Featured';
+                      default: return `${key}: ${value}`;
+                    }
+                  };
+
+                  return (
+                    <button
+                      key={key}
+                      onClick={() => handleFilterChange(key as keyof ProductFilter, undefined)}
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-primary-100 text-primary-800 text-xs rounded-full hover:bg-primary-200 transition-colors"
+                    >
+                      {getFilterLabel()}
+                      <X className="w-3 h-3" />
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
