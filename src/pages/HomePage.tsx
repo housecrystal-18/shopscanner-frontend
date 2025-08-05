@@ -41,9 +41,8 @@ export function HomePage() {
           <div className="py-20 md:py-28 text-center">
             <div className="max-w-3xl mx-auto">
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-6">
-                <span className="block text-primary-100 text-lg md:text-xl mb-2">Welcome to</span>
-                Shop Scan Pro
-                <span className="block text-primary-200 mt-2 text-2xl md:text-3xl lg:text-4xl">Product Intelligence & Authenticity</span>
+                Shop Smarter with
+                <span className="block text-primary-200 mt-2">Product Intelligence</span>
               </h1>
               <p className="text-lg md:text-xl text-primary-100 mb-10 leading-relaxed max-w-2xl mx-auto">
                 Scan products, verify authenticity, and analyze stores to protect yourself from fake products and scams.
