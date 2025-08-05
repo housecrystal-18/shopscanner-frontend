@@ -55,9 +55,9 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({ result, onNewA
           <h2 className="text-2xl font-bold text-gray-900">Analysis Results</h2>
           <button
             onClick={onNewAnalysis}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700"
+            className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700"
           >
-            New Analysis
+            📸 New Analysis
           </button>
         </div>
 
@@ -131,6 +131,20 @@ export const AnalysisResults: React.FC<AnalysisResultsProps> = ({ result, onNewA
               </div>
             </div>
           ))}
+
+          {/* Mass-produced product educational note */}
+          {result.patterns.massProduced > 50 && (
+            <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="flex items-start space-x-3">
+                <Info className="w-5 h-5 text-orange-600 mt-0.5 flex-shrink-0" />
+                <p className="text-sm text-orange-800">
+                  <strong>Educational Note:</strong> This listing appears similar to known mass-produced products. 
+                  Mass-produced items are typically manufactured in large quantities using standardized processes, 
+                  which can result in lower costs but may lack the uniqueness of handmade or artisan-crafted items.
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* General shopping tips */}
           <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">

@@ -16,7 +16,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           <div className="flex items-center justify-center mb-8">
             <Link to="/" className="flex items-center space-x-2">
               <ScanLine className="h-10 w-10 text-primary-600" />
-              <span className="text-2xl font-bold text-gray-900">Shop Scanner</span>
+              <span className="text-2xl font-bold text-gray-900">Shop Scan Pro</span>
             </Link>
           </div>
 
@@ -37,8 +37,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
                 Smart Shopping Starts Here
               </h2>
               <p className="text-xl opacity-90 max-w-md mx-auto">
-                Scan barcodes, compare prices, and discover the best deals 
-                from thousands of retailers worldwide.
+                Paste a URL, upload a screenshot, or scan a QR/barcode to gain the skills to verify authenticity, evaluate sellers, and find trustworthy deals.
               </p>
               
               {/* Feature highlights */}

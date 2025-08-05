@@ -77,7 +77,10 @@ function getEnvVar(key: string, defaultValue?: string): string {
     if (defaultValue !== undefined) {
       return defaultValue;
     }
-    console.warn(`Environment variable ${key} is not defined or invalid`);
+    // Only warn in development mode
+    if (import.meta.env.DEV) {
+      console.warn(`Environment variable ${key} is not defined or invalid`);
+    }
     return '';
   }
   return value;

@@ -18,10 +18,13 @@ export interface ScreenshotAnalysisResult {
     handmade: number;
     printOnDemand: number;
     authentic: number;
+    giftBox?: number;
+    mixedSourcing?: number;
   };
   indicators: string[];
   educationalInsights: string[];
   riskLevel: 'low' | 'medium' | 'high';
+  productType?: 'single' | 'gift-box' | 'bundle';
 }
 
 // Comprehensive Pattern Database for Educational Analysis
@@ -140,6 +143,45 @@ const QUALITY_CONCERNS = [
   'entry level', 'standard grade', 'commercial grade'
 ];
 
+const GIFT_BOX_PATTERNS = [
+  // Gift box specific
+  'gift box', 'gift set', 'gift basket', 'care package',
+  'curated box', 'subscription box', 'mystery box',
+  'gift bundle', 'gift hamper', 'gift collection',
+  
+  // Mixed product indicators
+  'includes:', 'contents:', 'this set contains',
+  'assorted items', 'variety pack', 'combo pack',
+  
+  // Personalization options
+  'personalized gift', 'custom message', 'gift message',
+  'add personal touch', 'customizable box',
+  
+  // Common gift box items
+  'candle included', 'bath products', 'spa set',
+  'self care kit', 'pamper set', 'wellness box',
+  
+  // Packaging descriptions
+  'beautifully packaged', 'ready to gift', 'gift ready',
+  'ribbon included', 'decorative box', 'reusable box'
+];
+
+const MIXED_PRODUCT_INDICATORS = [
+  // Items commonly mass-produced in gift boxes
+  'glass jar', 'metal tin', 'ceramic mug', 'wooden box',
+  'hair clip', 'hair tie', 'matches', 'lighter',
+  'tea light', 'votive candle', 'bath salt', 'soap bar',
+  
+  // Mixed sourcing indicators
+  'sourced from', 'assembled by', 'curated by',
+  'hand-picked items', 'specially selected',
+  
+  // Partial handmade indicators
+  'some items handmade', 'includes handmade',
+  'features artisan', 'mix of handmade and',
+  'partially handcrafted'
+];
+
 const AUTHENTIC_BRAND_INDICATORS = [
   // Official channels
   'authorized dealer', 'official retailer', 'brand authorized',
@@ -181,7 +223,9 @@ export const analyzeUserSubmission = async (
     massProduced: 0,
     handmade: 0,
     printOnDemand: 0,
-    authentic: 50 // Start neutral
+    authentic: 50, // Start neutral
+    giftBox: 0,
+    mixedSourcing: 0
   };
   const indicators: string[] = [];
   const educationalInsights: string[] = [];
@@ -255,6 +299,25 @@ export const analyzeUserSubmission = async (
       patterns.dropshipping -= 5;
       patterns.printOnDemand -= 5;
       indicators.push(`Educational observation: Authenticity indicator - "${indicator}"`);
+    }
+  });
+
+  // Analyze for gift box patterns
+  let giftBoxCount = 0;
+  GIFT_BOX_PATTERNS.forEach(pattern => {
+    if (allText.includes(pattern)) {
+      patterns.giftBox += 20;
+      giftBoxCount++;
+      indicators.push(`Educational observation: Gift box indicator - "${pattern}"`);
+    }
+  });
+
+  // Analyze for mixed product indicators
+  MIXED_PRODUCT_INDICATORS.forEach(indicator => {
+    if (allText.includes(indicator)) {
+      patterns.mixedSourcing += 15;
+      patterns.massProduced += 5;
+      indicators.push(`Educational observation: Mixed sourcing indicator - "${indicator}"`);
     }
   });
 
@@ -333,11 +396,33 @@ export const analyzeUserSubmission = async (
     educationalInsights.push('Shopping tip: Conflicting production indicators found - request additional details about the making process to clarify the product origin');
   }
 
+  // Gift box specific insights
+  if (patterns.giftBox > 30) {
+    educationalInsights.push('Educational insight: Gift box detected - These often contain a mix of mass-produced items (candles, clips, matches) with potentially handmade elements (custom packaging, personalized items)');
+    
+    if (patterns.mixedSourcing > 40) {
+      educationalInsights.push('Shopping tip: Mixed sourcing gift box - Ask the seller which items are handmade vs sourced. Request specifics about customization options');
+    }
+    
+    if (giftBoxCount > 2) {
+      educationalInsights.push('Analysis note: Multiple gift box indicators found - Consider that individual items may have different origins. Look for "assembled by" vs "made by" language');
+    }
+  }
+
+  // Determine product type
+  let productType: 'single' | 'gift-box' | 'bundle' = 'single';
+  if (patterns.giftBox > 30) {
+    productType = 'gift-box';
+  } else if (patterns.mixedSourcing > 30 || allText.includes('bundle') || allText.includes('set of')) {
+    productType = 'bundle';
+  }
+
   return {
     confidence,
     patterns,
     indicators,
     educationalInsights,
-    riskLevel
+    riskLevel,
+    productType
   };
 };

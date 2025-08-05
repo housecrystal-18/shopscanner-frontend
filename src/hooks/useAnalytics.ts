@@ -271,8 +271,25 @@ class Analytics {
 const analytics = new Analytics();
 
 export function useAnalytics() {
-  const { user } = useAuth();
-  const { subscription } = useSubscription();
+  // Safely get auth context with fallback
+  let user = null;
+  let subscription = null;
+  
+  try {
+    const auth = useAuth();
+    user = auth.user;
+  } catch (error) {
+    // AuthProvider not ready yet, use defaults
+    console.warn('AuthProvider not ready in useAnalytics, using defaults');
+  }
+  
+  try {
+    const sub = useSubscription();
+    subscription = sub.subscription;
+  } catch (error) {
+    // SubscriptionProvider not ready yet, use defaults
+    console.warn('SubscriptionProvider not ready in useAnalytics, using defaults');
+  }
 
   // Initialize analytics when user data is available
   useEffect(() => {

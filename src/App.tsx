@@ -22,6 +22,7 @@ import { PricingPage } from './pages/PricingPage';
 import { SubscriptionPage } from './pages/SubscriptionPage';
 import { SupportPage } from './pages/SupportPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { AIAnalysisPage } from './pages/AIAnalysisPage';
 
 // Providers
 import { AuthProvider } from './contexts/AuthContext';
@@ -134,6 +135,14 @@ function AppContent() {
                 <ProtectedRoute>
                   <Layout>
                     <StoreAnalysisPage />
+                  </Layout>
+                </ProtectedRoute>
+              } />
+
+              <Route path="/ai-analysis" element={
+                <ProtectedRoute>
+                  <Layout>
+                    <AIAnalysisPage />
                   </Layout>
                 </ProtectedRoute>
               } />

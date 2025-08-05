@@ -25,7 +25,19 @@ interface SubscriptionProviderProps {
 export function SubscriptionProvider({ children }: SubscriptionProviderProps) {
   const [subscription, setSubscription] = useState<UserSubscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const { user, isAuthenticated } = useAuth();
+  
+  // Safely get auth context with fallback
+  let user = null;
+  let isAuthenticated = false;
+  
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    isAuthenticated = auth.isAuthenticated;
+  } catch (error) {
+    // AuthProvider not ready yet, use defaults
+    console.warn('AuthProvider not ready in SubscriptionProvider, using defaults');
+  }
 
   // Get current plan (default to free if no subscription)
   const currentPlan = subscription 

@@ -398,7 +398,8 @@ export function ScannerPage() {
                     QR Code Scanner
                   </h3>
                   <p className="text-gray-600 mb-6">
-                    Scan product QR codes for authenticity verification against manufacturer databases
+                    Scan product QR codes for authenticity verification against manufacturer databases. 
+                    Perfect for in-store verification of luxury goods, electronics, and branded products.
                   </p>
                   
                   <button
@@ -596,8 +597,20 @@ export function ScannerPage() {
                 <strong>QR Code:</strong> {qrResult.qrCode}
               </p>
               <p className="text-xs text-blue-600 mt-1">
-                This QR code was verified against official manufacturer databases
+                This QR code was verified against official manufacturer databases and anti-counterfeiting systems
               </p>
+            </div>
+
+            {/* Authenticity Tips for QR Codes */}
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+              <h4 className="font-medium text-green-800 mb-2">🔍 QR Code Authenticity Tips</h4>
+              <ul className="text-sm text-green-700 space-y-1">
+                <li>• Genuine QR codes should lead to official brand websites or verification pages</li>
+                <li>• Check if the QR code is properly integrated into the product packaging</li>
+                <li>• Verify that product details match the information from the QR scan</li>
+                <li>• Authentic products often have multiple security features beyond just QR codes</li>
+                <li>• Be cautious of QR codes that redirect to suspicious or unrelated websites</li>
+              </ul>
             </div>
 
             <button
