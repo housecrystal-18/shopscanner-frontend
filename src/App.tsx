@@ -63,19 +63,13 @@ const queryClient = new QueryClient({
   },
 });
 
-function App() {
+// Inner app component that uses context-dependent hooks
+function AppContent() {
   // Initialize offline sync
   useOfflineSync();
 
   // Initialize analytics
   const analytics = useAnalytics();
-
-  // Initialize monitoring in production
-  useEffect(() => {
-    if (import.meta.env.PROD) {
-      monitoring.initialize().catch(console.error);
-    }
-  }, []);
 
   // Track route changes for analytics
   useEffect(() => {
@@ -83,9 +77,6 @@ function App() {
   }, [analytics]);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <SubscriptionProvider>
     <Router>
           <div className="min-h-screen bg-gray-50">
             <Routes>
@@ -246,6 +237,22 @@ function App() {
             <HelpWidget />
           </div>
           </Router>
+  );
+}
+
+function App() {
+  // Initialize monitoring in production
+  useEffect(() => {
+    if (import.meta.env.PROD) {
+      monitoring.initialize().catch(console.error);
+    }
+  }, []);
+
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <SubscriptionProvider>
+          <AppContent />
         </SubscriptionProvider>
       </AuthProvider>
     </QueryClientProvider>
