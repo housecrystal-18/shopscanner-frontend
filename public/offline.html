@@ -1,259 +1,237 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Offline - Shop Scanner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Offline, Shop Scan Pro</title>
+
+  <!-- PWA hints -->
+  <meta name="theme-color" content="#3b82f6" />
+  <link rel="manifest" href="/manifest.json" />
+
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg1: #667eea;
+      --bg2: #764ba2;
+      --card: #ffffff;
+      --text: #1e293b;
+      --muted: #64748b;
+      --brand: #3b82f6;
+      --brand-strong: #2563eb;
+      --ok-bg: #d1fae5;
+      --ok-border: #10b981;
+      --ok-text: #065f46;
+      --warn-bg: #fef3c7;
+      --warn-border: #f59e0b;
+      --warn-text: #92400e;
     }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --card: #0b1220;
+        --text: #e5e7eb;
+        --muted: #cbd5e1;
+      }
+      body { color-scheme: dark; }
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, Arial, sans-serif;
       min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #333;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--bg1) 0%, var(--bg2) 100%);
+      color: var(--text);
     }
 
-    .offline-container {
-      background: white;
+    .card {
+      background: var(--card);
       border-radius: 20px;
-      padding: 3rem 2rem;
+      padding: 2.5rem 2rem;
+      width: min(520px, 92vw);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
       text-align: center;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-      max-width: 500px;
-      width: 90%;
-      margin: 2rem;
     }
 
-    .offline-icon {
-      width: 120px;
-      height: 120px;
-      margin: 0 auto 2rem;
-      background: #f1f5f9;
+    .icon {
+      width: 96px; height: 96px;
+      margin: 0 auto 1.25rem;
+      display: grid; place-items: center;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 3rem;
+      background: #f1f5f9;
     }
 
-    .offline-title {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #1e293b;
-      margin-bottom: 1rem;
-    }
+    .title { font-size: 1.875rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .msg   { font-size: 1.05rem; color: var(--muted); line-height: 1.6; margin-bottom: 1.25rem; }
 
-    .offline-message {
-      font-size: 1.1rem;
-      color: #64748b;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
+    .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+    @media (max-width: 640px) { .actions { grid-template-columns: 1fr; } }
 
-    .retry-button {
-      background: #3b82f6;
-      color: white;
-      border: none;
-      padding: 1rem 2rem;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      margin-right: 1rem;
-    }
-
-    .retry-button:hover {
-      background: #2563eb;
-      transform: translateY(-2px);
-    }
-
-    .home-button {
-      background: transparent;
-      color: #3b82f6;
-      border: 2px solid #3b82f6;
-      padding: 1rem 2rem;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.2s;
-      text-decoration: none;
+    button, a.btn {
       display: inline-block;
+      border: 0;
+      border-radius: 10px;
+      padding: 0.9rem 1rem;
+      font-weight: 700;
+      font-size: 1rem;
+      cursor: pointer;
+      text-decoration: none;
+      transition: transform 120ms ease, background 120ms ease, border-color 120ms ease, color 120ms ease;
     }
 
-    .home-button:hover {
-      background: #3b82f6;
-      color: white;
-      transform: translateY(-2px);
+    .btn-primary { background: var(--brand); color: #fff; }
+    .btn-primary:hover { background: var(--brand-strong); transform: translateY(-2px); }
+
+    .btn-ghost { background: transparent; color: var(--brand); border: 2px solid var(--brand); }
+    .btn-ghost:hover { background: var(--brand); color: #fff; transform: translateY(-2px); }
+
+    .list { text-align: left; margin-top: 1rem; }
+    .list-title { font-weight: 700; margin-bottom: 0.5rem; }
+    .item { display: grid; grid-template-columns: 24px 1fr; gap: 10px; align-items: center; color: var(--muted); margin: 0.4rem 0; }
+    .dot {
+      width: 20px; height: 20px; border-radius: 50%; background: var(--brand);
+      display: grid; place-items: center; color: #fff; font-size: 12px;
     }
 
-    .features-list {
-      margin-top: 2rem;
+    .status {
+      margin-top: 1rem;
+      padding: 0.85rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--warn-border);
+      background: var(--warn-bg);
+      color: var(--warn-text);
+      font-size: 0.95rem;
       text-align: left;
     }
 
-    .features-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      color: #1e293b;
-      margin-bottom: 1rem;
-      text-align: center;
+    .status.ok {
+      border-color: var(--ok-border);
+      background: var(--ok-bg);
+      color: var(--ok-text);
     }
 
-    .feature-item {
-      display: flex;
-      align-items: center;
-      margin-bottom: 0.8rem;
-      color: #64748b;
+    .status h2 {
+      font-size: 1rem; margin-bottom: 0.35rem;
     }
 
-    .feature-icon {
-      width: 20px;
-      height: 20px;
-      margin-right: 12px;
-      background: #3b82f6;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 12px;
-      flex-shrink: 0;
-    }
+    .status p { margin: 0.15rem 0; }
 
-    .status-indicator {
-      margin-top: 2rem;
-      padding: 1rem;
-      background: #fef3c7;
-      border: 1px solid #f59e0b;
-      border-radius: 10px;
-      color: #92400e;
-      font-size: 0.9rem;
-    }
-
-    .connection-status {
-      font-weight: 600;
-    }
-
-    @media (max-width: 640px) {
-      .offline-container {
-        padding: 2rem 1.5rem;
-      }
-      
-      .offline-title {
-        font-size: 1.5rem;
-      }
-      
-      .retry-button,
-      .home-button {
-        display: block;
-        width: 100%;
-        margin: 0.5rem 0;
-      }
+    .sr-only {
+      position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
     }
   </style>
 </head>
 <body>
-  <div class="offline-container">
-    <div class="offline-icon">
-      📱
+  <div class="card" role="region" aria-labelledby="offline-title">
+    <div class="icon" aria-hidden="true">
+      <!-- Inline SVG so we do not depend on external assets -->
+      <svg width="56" height="56" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 12a9 9 0 0 1 18 0" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M6 12a6 6 0 0 1 12 0" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+        <path d="M9 12a3 3 0 0 1 6 0" stroke="#334155" stroke-width="1.5" stroke-linecap="round"/>
+        <circle cx="12" cy="18" r="2.25" fill="#334155"/>
+        <path d="M3 3l18 18" stroke="#ef4444" stroke-width="1.75" stroke-linecap="round"/>
+      </svg>
     </div>
-    
-    <h1 class="offline-title">You're Offline</h1>
-    
-    <p class="offline-message">
-      Shop Scanner works best with an internet connection. Some features may be limited while offline, but you can still access cached products and your saved wishlist.
+
+    <h1 id="offline-title" class="title">You are offline</h1>
+    <p class="msg">
+      Some features will be unavailable. You can still view cached products and your saved wishlist. When you are back online, reload to continue.
     </p>
-    
-    <div>
-      <button class="retry-button" onclick="window.location.reload()">
-        Try Again
-      </button>
-      <a href="/" class="home-button">
-        Go Home
-      </a>
+
+    <div class="actions">
+      <button class="btn-primary" id="retry">Try again</button>
+      <a href="/" class="btn-ghost">Go home</a>
     </div>
-    
-    <div class="features-list">
-      <h3 class="features-title">Available Offline:</h3>
-      
-      <div class="feature-item">
-        <div class="feature-icon">📦</div>
-        <span>View cached product information</span>
-      </div>
-      
-      <div class="feature-item">
-        <div class="feature-icon">❤️</div>
-        <span>Browse your wishlist items</span>
-      </div>
-      
-      <div class="feature-item">
-        <div class="feature-icon">🔍</div>
-        <span>Search previously viewed products</span>
-      </div>
-      
-      <div class="feature-item">
-        <div class="feature-icon">📊</div>
-        <span>View cached price comparisons</span>
-      </div>
+
+    <div class="list" aria-labelledby="avail-offline">
+      <div class="list-title" id="avail-offline">Available offline</div>
+      <div class="item"><div class="dot" aria-hidden="true">•</div><span>Cached product details</span></div>
+      <div class="item"><div class="dot" aria-hidden="true">•</div><span>Saved wishlist items</span></div>
+      <div class="item"><div class="dot" aria-hidden="true">•</div><span>Previously viewed products</span></div>
+      <div class="item"><div class="dot" aria-hidden="true">•</div><span>Cached price comparisons</span></div>
     </div>
-    
-    <div class="status-indicator">
-      <div class="connection-status">Connection Status:</div>
-      <span id="connection-status">Checking...</span>
+
+    <div id="status" class="status" aria-live="polite">
+      <h2 class="sr-only">Connection status</h2>
+      <p id="net">Checking connection...</p>
+      <p id="api" class="sr-only">Checking API...</p>
     </div>
   </div>
 
   <script>
-    // Check connection status
-    function updateConnectionStatus() {
-      const statusElement = document.getElementById('connection-status');
-      
-      if (navigator.onLine) {
-        statusElement.textContent = 'Back online! Click "Try Again" to continue';
-        statusElement.parentElement.style.background = '#d1fae5';
-        statusElement.parentElement.style.borderColor = '#10b981';
-        statusElement.parentElement.style.color = '#065f46';
+    // Helpers
+    const $ = (id) => document.getElementById(id);
+    const statusBox = $('status');
+    const netEl = $('net');
+    const apiEl = $('api');
+
+    function setStatus({ online, api }) {
+      if (online) {
+        statusBox.classList.add('ok');
+        netEl.textContent = 'Back online. You can reload now.';
       } else {
-        statusElement.textContent = 'Offline - Check your internet connection';
-        statusElement.parentElement.style.background = '#fef3c7';
-        statusElement.parentElement.style.borderColor = '#f59e0b';
-        statusElement.parentElement.style.color = '#92400e';
+        statusBox.classList.remove('ok');
+        netEl.textContent = 'Offline. Check your internet connection.';
+      }
+
+      if (typeof api === 'string') {
+        apiEl.classList.remove('sr-only');
+        apiEl.textContent = api;
+      } else {
+        apiEl.classList.add('sr-only');
       }
     }
 
-    // Update status immediately
-    updateConnectionStatus();
+    async function checkApiHealth(signal) {
+      try {
+        const res = await fetch('/health', { cache: 'no-store', redirect: 'follow', signal });
+        if (res.ok) return 'API reachable';
+        return `API error ${res.status}`;
+      } catch (e) {
+        return 'API unreachable';
+      }
+    }
 
-    // Listen for connection changes
-    window.addEventListener('online', updateConnectionStatus);
-    window.addEventListener('offline', updateConnectionStatus);
+    async function update() {
+      const online = navigator.onLine;
+      let apiMsg;
+      // Only probe API if the browser reports online
+      if (online) {
+        const ac = new AbortController();
+        const t = setTimeout(() => ac.abort(), 4000);
+        apiMsg = await checkApiHealth(ac.signal);
+        clearTimeout(t);
+      }
+      setStatus({ online, api: online ? apiMsg : undefined });
+    }
 
-    // Auto-refresh when back online
-    window.addEventListener('online', () => {
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
-    });
+    // Initial status
+    update();
 
-    // Service worker communication
+    // React to changes
+    window.addEventListener('online', update);
+    window.addEventListener('offline', update);
+
+    // Manual reload only. No automatic reload loop, that frustrates users.
+    $('retry').addEventListener('click', () => window.location.reload());
+
+    // Optional: listen for SW messages that tell us new content is ready
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('message', (event) => {
-        if (event.data && event.data.type === 'CACHE_UPDATED') {
-          const statusElement = document.getElementById('connection-status');
-          statusElement.textContent = 'New content available! Click "Try Again" to update';
+        if (event?.data?.type === 'CACHE_UPDATED') {
+          setStatus({ online: navigator.onLine, api: 'New content available. Press Try again.' });
         }
       });
     }
   </script>
+
+  <noscript>
+    <style>.card{padding:1.5rem}.actions{grid-template-columns:1fr}.msg{margin-bottom:1rem}</style>
+    <p style="text-align:center;margin-top:0.75rem;color:#334155">JavaScript is disabled. Limited offline view only.</p>
+  </noscript>
 </body>
 </html>
