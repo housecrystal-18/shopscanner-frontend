@@ -1,17 +1,38 @@
 // Vercel serverless function for AI product analysis
+// Path: /api/analyze-product.js
+
 import { ImageAnnotatorClient } from '@google-cloud/vision';
+
+// Helpers
+function cleanPrivateKey(pk) {
+  if (!pk) return pk;
+  // Handle escaped newlines and accidental quotes from env UIs
+  let key = pk.replace(/\\n/g, '\n');
+  if (key.startsWith('"') && key.endsWith('"')) key = key.slice(1, -1);
+  if (key.startsWith("'") && key.endsWith("'")) key = key.slice(1, -1);
+  return key;
+}
 
 // Initialize Google Cloud Vision client
 const vision = new ImageAnnotatorClient({
+  projectId: process.env.GOOGLE_CLOUD_PROJECT_ID,
   credentials: {
     client_email: process.env.GOOGLE_CLOUD_CLIENT_EMAIL,
-    private_key: process.env.GOOGLE_CLOUD_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    project_id: process.env.GOOGLE_CLOUD_PROJECT_ID,
+    private_key: cleanPrivateKey(process.env.GOOGLE_CLOUD_PRIVATE_KEY),
   },
 });
 
 // UPC Database API configuration
 const UPC_API_KEY = process.env.UPC_DATABASE_API_KEY;
+
+// Allow large JSON bodies for base64 images
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -19,7 +40,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { image, url, userLocation } = req.body;
+    const { image, url, userLocation } = req.body || {};
 
     if (!image && !url) {
       return res.status(400).json({ error: 'Image or URL required' });
@@ -32,7 +53,7 @@ export default async function handler(req, res) {
       price_analysis: {},
       recommendations: [],
       confidence: 0,
-      processing_time: Date.now()
+      processing_time: Date.now(),
     };
 
     // Step 1: Extract text from image using Google Vision
@@ -62,16 +83,15 @@ export default async function handler(req, res) {
     // Step 5: Generate recommendations
     analysisResults.recommendations = generateRecommendations(analysisResults);
 
-    res.status(200).json(analysisResults);
-
+    return res.status(200).json(analysisResults);
   } catch (error) {
     console.error('AI Analysis Error:', error);
-    res.status(500).json({ 
-      error: 'Analysis failed', 
-      message: error.message,
+    return res.status(500).json({
+      error: 'Analysis failed',
+      message: error?.message || 'Unknown error',
       authenticity_score: 50, // Fallback score
       risk_level: 'unknown',
-      confidence: 0.1
+      confidence: 0.1,
     });
   }
 }
@@ -79,23 +99,24 @@ export default async function handler(req, res) {
 // Analyze image text using Google Cloud Vision
 async function analyzeImageText(imageBase64) {
   try {
-    const imageBuffer = Buffer.from(imageBase64.split(',')[1], 'base64');
-    
+    // Support data URLs or raw base64
+    const commaIdx = imageBase64.indexOf(',');
+    const base64Payload = commaIdx >= 0 ? imageBase64.slice(commaIdx + 1) : imageBase64;
+    const imageBuffer = Buffer.from(base64Payload, 'base64');
+
     const [result] = await vision.textDetection({
-      image: { content: imageBuffer }
+      image: { content: imageBuffer },
     });
 
-    const detections = result.textAnnotations;
-    const extractedText = detections?.[0]?.description || '';
+    const detections = result?.textAnnotations || [];
+    const extractedText = detections[0]?.description || '';
 
-    // Analyze the extracted text
     const textAnalysis = {
       extracted_text: extractedText,
       detected_issues: [],
-      text_quality_score: 0
+      text_quality_score: 0,
     };
 
-    // Check for common authenticity indicators
     textAnalysis.text_quality_score = analyzeTextQuality(extractedText);
     textAnalysis.detected_issues = detectTextIssues(extractedText);
     textAnalysis.detected_barcode = extractBarcode(extractedText);
@@ -103,28 +124,37 @@ async function analyzeImageText(imageBase64) {
     textAnalysis.detected_model = detectModel(extractedText);
 
     return textAnalysis;
-
   } catch (error) {
     console.error('Vision API Error:', error);
     return {
       extracted_text: '',
       detected_issues: ['Failed to process image'],
-      text_quality_score: 0
+      text_quality_score: 0,
     };
   }
 }
 
 // Analyze product URL for authenticity indicators
-async function analyzeProductUrl(url) {
+async function analyzeProductUrl(rawUrl) {
   try {
     const urlAnalysis = {
       store_reputation: 0,
       url_risk_factors: [],
       detected_store: '',
-      price_information: null
+      price_information: null,
     };
 
-    const domain = new URL(url).hostname.toLowerCase();
+    let domain = 'unknown';
+    try {
+      const parsed = new URL(rawUrl);
+      domain = parsed.hostname.toLowerCase();
+    } catch {
+      urlAnalysis.url_risk_factors.push('Invalid URL');
+      urlAnalysis.store_reputation = 50;
+      urlAnalysis.detected_store = 'unknown';
+      return urlAnalysis;
+    }
+
     urlAnalysis.detected_store = domain;
 
     // Store reputation scoring
@@ -138,27 +168,34 @@ async function analyzeProductUrl(url) {
       'etsy.com': 60,
       'aliexpress.com': 30,
       'wish.com': 20,
-      'dhgate.com': 25
+      'dhgate.com': 25,
+      // Common subdomains should map cleanly
+      'www.amazon.com': 95,
+      'www.ebay.com': 70,
+      'www.etsy.com': 60,
     };
 
-    urlAnalysis.store_reputation = storeReputations[domain] || 50;
+    urlAnalysis.store_reputation = storeReputations[domain] ?? 50;
 
     // Check for suspicious URL patterns
-    if (domain.includes('replica') || domain.includes('fake') || domain.includes('copy')) {
+    const lowerDomain = domain.toLowerCase();
+    if (lowerDomain.includes('replica') || lowerDomain.includes('fake') || lowerDomain.includes('copy')) {
       urlAnalysis.url_risk_factors.push('Suspicious domain name');
     }
 
-    if (url.includes('?') && url.split('?')[1].length > 100) {
-      urlAnalysis.url_risk_factors.push('Suspicious URL parameters');
+    if (rawUrl.includes('?')) {
+      const query = rawUrl.split('?')[1] || '';
+      if (query.length > 100) {
+        urlAnalysis.url_risk_factors.push('Suspicious URL parameters');
+      }
     }
 
     return urlAnalysis;
-
-  } catch (error) {
+  } catch {
     return {
       store_reputation: 50,
-      url_risk_factors: ['Invalid URL'],
-      detected_store: 'unknown'
+      url_risk_factors: ['URL analysis error'],
+      detected_store: 'unknown',
     };
   }
 }
@@ -166,20 +203,32 @@ async function analyzeProductUrl(url) {
 // Get product information from UPC Database
 async function getProductInfo(barcode) {
   try {
-    if (!UPC_API_KEY) {
-      return { error: 'UPC API not configured' };
+    // Use paid endpoint if key is present, fall back to trial
+    const hasKey = Boolean(UPC_API_KEY);
+    const url = hasKey
+      ? `https://api.upcitemdb.com/prod/v1/lookup?upc=${encodeURIComponent(barcode)}`
+      : `https://api.upcitemdb.com/prod/trial/lookup?upc=${encodeURIComponent(barcode)}`;
+
+    // Basic timeout so the function does not hang
+    const ac = new AbortController();
+    const timeout = setTimeout(() => ac.abort(), 6000);
+
+    const headers = {
+      Accept: 'application/json',
+      'User-Agent': 'Shop Scanner Now',
+    };
+    if (hasKey) headers.key = UPC_API_KEY;
+
+    const response = await fetch(url, { headers, signal: ac.signal });
+    clearTimeout(timeout);
+
+    if (!response.ok) {
+      return { error: `UPC API HTTP ${response.status}` };
     }
 
-    const response = await fetch(`https://api.upcitemdb.com/prod/trial/lookup?upc=${barcode}`, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Shop Scan Pro'
-      }
-    });
-
     const data = await response.json();
-    
-    if (data.items && data.items.length > 0) {
+
+    if (Array.isArray(data?.items) && data.items.length > 0) {
       const product = data.items[0];
       return {
         name: product.title,
@@ -187,12 +236,11 @@ async function getProductInfo(barcode) {
         category: product.category,
         official_images: product.images || [],
         msrp: product.msrp,
-        description: product.description
+        description: product.description,
       };
     }
 
     return { error: 'Product not found in database' };
-
   } catch (error) {
     console.error('UPC API Error:', error);
     return { error: 'Failed to fetch product information' };
@@ -204,31 +252,36 @@ function analyzeTextQuality(text) {
   if (!text) return 0;
 
   let score = 100;
-  
+
   // Check for spelling errors (basic implementation)
   const commonMisspellings = [
-    'gurantee', 'guarntee', 'garantee', // guarantee
-    'orignal', 'origional', // original
-    'authetic', 'autentic', 'authentc', // authentic
-    'quallity', 'qualitty', // quality
+    'gurantee',
+    'guarntee',
+    'garantee', // guarantee
+    'orignal',
+    'origional', // original
+    'authetic',
+    'autentic',
+    'authentc', // authentic
+    'quallity',
+    'qualitty', // quality
   ];
 
-  commonMisspellings.forEach(misspelling => {
-    if (text.toLowerCase().includes(misspelling)) {
-      score -= 20;
-    }
-  });
+  const lt = text.toLowerCase();
+  for (const misspelling of commonMisspellings) {
+    if (lt.includes(misspelling)) score -= 20;
+  }
 
-  // Check for suspicious patterns
-  if (text.toLowerCase().includes('aaa quality')) score -= 15;
-  if (text.toLowerCase().includes('replica')) score -= 30;
-  if (text.toLowerCase().includes('1:1 copy')) score -= 40;
-  if (text.toLowerCase().includes('same as original')) score -= 25;
+  // Suspicious patterns
+  if (lt.includes('aaa quality')) score -= 15;
+  if (lt.includes('replica')) score -= 30;
+  if (lt.includes('1:1 copy')) score -= 40;
+  if (lt.includes('same as original')) score -= 25;
 
-  // Check for legitimate indicators
-  if (text.toLowerCase().includes('warranty')) score += 10;
-  if (text.toLowerCase().includes('serial number')) score += 15;
-  if (text.toLowerCase().includes('model number')) score += 10;
+  // Legitimate indicators
+  if (lt.includes('warranty')) score += 10;
+  if (lt.includes('serial number')) score += 15;
+  if (lt.includes('model number')) score += 10;
 
   return Math.max(0, Math.min(100, score));
 }
@@ -236,7 +289,7 @@ function analyzeTextQuality(text) {
 // Detect text-based issues
 function detectTextIssues(text) {
   const issues = [];
-  
+
   if (!text || text.length < 10) {
     issues.push('Insufficient text detected');
     return issues;
@@ -244,21 +297,22 @@ function detectTextIssues(text) {
 
   const lowerText = text.toLowerCase();
 
-  // Spelling/grammar issues
+  // Spelling or grammar
   const misspellings = ['gurantee', 'orignal', 'authetic', 'quallity'];
-  misspellings.forEach(word => {
+  for (const word of misspellings) {
     if (lowerText.includes(word)) {
       issues.push('Spelling errors detected');
+      break;
     }
-  });
+  }
 
   // Suspicious phrases
   const suspiciousPhrases = ['aaa quality', 'replica', '1:1 copy', 'same as original'];
-  suspiciousPhrases.forEach(phrase => {
+  for (const phrase of suspiciousPhrases) {
     if (lowerText.includes(phrase)) {
       issues.push(`Suspicious phrase: "${phrase}"`);
     }
-  });
+  }
 
   // Missing expected elements
   if (!lowerText.includes('serial') && !lowerText.includes('model')) {
@@ -268,113 +322,35 @@ function detectTextIssues(text) {
   return issues;
 }
 
-// Extract barcode/UPC from text
+// Extract barcode or UPC from text
 function extractBarcode(text) {
-  // Look for UPC/EAN patterns
-  const barcodePattern = /\b\d{12,13}\b/g;
-  const matches = text.match(barcodePattern);
-  return matches ? matches[0] : null;
+  if (!text) return null;
+  // Match 12 to 13 digit sequences that look like UPC/EAN
+  const barcodePattern = /(^|[^\d])(\d{12,13})(?!\d)/g;
+  const matches = [];
+  let m;
+  while ((m = barcodePattern.exec(text)) !== null) {
+    matches.push(m[2]);
+  }
+  return matches.length ? matches[0] : null;
 }
 
 // Detect brand from text
 function detectBrand(text) {
+  if (!text) return null;
   const commonBrands = [
-    'apple', 'samsung', 'nike', 'adidas', 'gucci', 'louis vuitton',
-    'rolex', 'omega', 'sony', 'microsoft', 'google', 'amazon'
+    'apple',
+    'samsung',
+    'nike',
+    'adidas',
+    'gucci',
+    'louis vuitton',
+    'rolex',
+    'omega',
+    'sony',
+    'microsoft',
+    'google',
+    'amazon',
   ];
-  
-  const lowerText = text.toLowerCase();
-  return commonBrands.find(brand => lowerText.includes(brand)) || null;
-}
 
-// Detect model from text
-function detectModel(text) {
-  // Look for model patterns (letters + numbers)
-  const modelPattern = /\b[A-Z]{1,3}[-\s]?\d{2,4}[A-Z]?\b/g;
-  const matches = text.match(modelPattern);
-  return matches ? matches[0] : null;
-}
-
-// Calculate overall authenticity score
-function calculateAuthenticityScore(results) {
-  let score = 100;
-  let factors = 0;
-
-  // Text quality (30% weight)
-  if (results.text_quality_score !== undefined) {
-    score = (score * factors + results.text_quality_score * 0.3) / (factors + 0.3);
-    factors += 0.3;
-  }
-
-  // Store reputation (40% weight)
-  if (results.store_reputation !== undefined) {
-    score = (score * factors + results.store_reputation * 0.4) / (factors + 0.4);
-    factors += 0.4;
-  }
-
-  // Issue penalties (30% weight)
-  const issueCount = results.detected_issues?.length || 0;
-  const issuePenalty = Math.min(issueCount * 15, 60); // Max 60 point penalty
-  score = (score * factors + (100 - issuePenalty) * 0.3) / (factors + 0.3);
-
-  return Math.round(Math.max(0, Math.min(100, score)));
-}
-
-// Get risk level based on score
-function getRiskLevel(score) {
-  if (score >= 80) return 'low';
-  if (score >= 60) return 'medium';
-  if (score >= 40) return 'high';
-  return 'very_high';
-}
-
-// Calculate confidence score
-function calculateConfidence(results) {
-  let confidence = 0.5; // Base confidence
-
-  // Increase confidence based on available data
-  if (results.extracted_text?.length > 50) confidence += 0.2;
-  if (results.detected_barcode) confidence += 0.2;
-  if (results.product_info && !results.product_info.error) confidence += 0.3;
-  if (results.detected_brand) confidence += 0.1;
-
-  // Decrease confidence for issues
-  const issueCount = results.detected_issues?.length || 0;
-  confidence = Math.max(0.1, confidence - (issueCount * 0.05));
-
-  return Math.round(confidence * 100) / 100;
-}
-
-// Generate recommendations based on analysis
-function generateRecommendations(results) {
-  const recommendations = [];
-  const score = results.authenticity_score;
-
-  if (score < 40) {
-    recommendations.push('⚠️ High risk of counterfeit - avoid this product');
-    recommendations.push('🔍 Verify through official brand channels');
-    recommendations.push('💰 Price may be too good to be true');
-  } else if (score < 60) {
-    recommendations.push('⚡ Exercise caution with this product');
-    recommendations.push('🏪 Consider purchasing from verified retailers');
-    recommendations.push('📞 Contact brand directly to verify authenticity');
-  } else if (score < 80) {
-    recommendations.push('✅ Likely authentic but verify before purchase');
-    recommendations.push('🔒 Check seller reviews and return policy');
-  } else {
-    recommendations.push('✅ High confidence this product is authentic');
-    recommendations.push('💚 Safe to proceed with purchase');
-  }
-
-  // Store-specific recommendations
-  if (results.store_reputation < 60) {
-    recommendations.push('🏪 Consider alternative retailers with better reputation');
-  }
-
-  // Price-based recommendations
-  if (results.price_analysis?.below_market) {
-    recommendations.push('💰 Price significantly below market - verify authenticity');
-  }
-
-  return recommendations;
-}
+  const lowerText
