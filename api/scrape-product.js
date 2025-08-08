@@ -1,5 +1,25 @@
 // Vercel serverless function for web scraping
-import fetch from 'node-fetch';
+// Path: /api/scrape-product.js
+// Notes:
+// - Uses the built-in global fetch on Vercel Node runtime, no node-fetch import
+// - No setInterval, serverless-safe in-memory rate limiting
+// - Strips forbidden or suspicious headers, adds site-specific hints safely
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb',
+    },
+  },
+};
+
+const RATE_LIMIT_WINDOW_MS = 2000; // 2 seconds per domain
+const RATE_LIMIT_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL to purge stale entries
+const MAX_HTML_MIN_LENGTH = 100;
+
+// In-memory rate limit store. Lives across warm invocations only.
+const rlStore = globalThis.__SCRAPER_RL__ || new Map();
+globalThis.__SCRAPER_RL__ = rlStore;
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,8 +27,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { url, userAgent, timeout = 15000, attempt = 1 } = req.body;
-
+    const { url, userAgent, timeout = 15000, attempt = 1 } = req.body || {};
     if (!url) {
       return res.status(400).json({ error: 'URL is required' });
     }
@@ -17,196 +36,156 @@ export default async function handler(req, res) {
     let parsedUrl;
     try {
       parsedUrl = new URL(url);
-    } catch (error) {
+      if (!/^https?:$/.test(parsedUrl.protocol)) {
+        return res.status(400).json({ error: 'Only http and https URLs are allowed' });
+      }
+    } catch {
       return res.status(400).json({ error: 'Invalid URL format' });
     }
 
-    // Rate limiting check
-    const domain = parsedUrl.hostname.toLowerCase().replace('www.', '');
-    const rateLimitKey = `scrape_${domain}`;
-    
-    // Check if we're being rate limited (simple in-memory check)
-    if (global.rateLimits && global.rateLimits[rateLimitKey]) {
-      const lastRequest = global.rateLimits[rateLimitKey];
-      if (Date.now() - lastRequest < 2000) { // 2 second rate limit
-        return res.status(429).json({ 
-          error: 'Rate limited', 
-          retryAfter: 2000 - (Date.now() - lastRequest)
-        });
-      }
-    }
+    const domain = parsedUrl.hostname.toLowerCase().replace(/^www\./, '');
 
-    // Initialize rate limit tracking
-    if (!global.rateLimits) {
-      global.rateLimits = {};
+    // Serverless-safe rate limiting per domain
+    purgeStaleRateLimits();
+    const now = Date.now();
+    const last = rlStore.get(domain) || 0;
+    const elapsed = now - last;
+    if (elapsed < RATE_LIMIT_WINDOW_MS) {
+      return res.status(429).json({
+        error: 'Rate limited',
+        retryAfter: RATE_LIMIT_WINDOW_MS - elapsed,
+      });
     }
-    global.rateLimits[rateLimitKey] = Date.now();
+    rlStore.set(domain, now);
 
-    // Set up request headers to mimic a real browser
+    // Build headers. Do not set forbidden headers like Accept-Encoding.
+    // Keep it realistic, but conservative.
     const headers = {
-      'User-Agent': userAgent || 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-      'Accept-Language': 'en-US,en;q=0.5',
-      'Accept-Encoding': 'gzip, deflate, br',
-      'DNT': '1',
-      'Connection': 'keep-alive',
+      'User-Agent':
+        userAgent ||
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      Accept:
+        'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+      'Accept-Language': 'en-US,en;q=0.8',
+      // Connection headers are hop-by-hop and can be blocked, skip them
+      // Do not send DNT, Sec-* unless truly needed
       'Upgrade-Insecure-Requests': '1',
-      'Sec-Fetch-Dest': 'document',
-      'Sec-Fetch-Mode': 'navigate',
-      'Sec-Fetch-Site': 'none',
-      'Cache-Control': 'max-age=0'
+      Referer: 'https://www.google.com/',
+      // Some sites care about this casing, keep exact keys as shown
     };
 
-    // Add domain-specific headers
+    // Domain-specific hints
     if (domain.includes('amazon')) {
       headers['Accept-Language'] = 'en-US,en;q=0.9';
-      headers['sec-ch-ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
+      headers['sec-ch-ua'] =
+        '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
       headers['sec-ch-ua-mobile'] = '?0';
       headers['sec-ch-ua-platform'] = '"Windows"';
-    } else if (domain.includes('ebay')) {
+    } else if (domain.includes('ebay') || domain.includes('etsy')) {
       headers['Accept-Language'] = 'en-US,en;q=0.9';
-      headers['sec-ch-ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
+      headers['sec-ch-ua'] =
+        '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
       headers['sec-ch-ua-mobile'] = '?0';
       headers['sec-ch-ua-platform'] = '"Windows"';
-      headers['Referer'] = 'https://www.google.com/';
-      headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8';
-      headers['Accept-Encoding'] = 'gzip, deflate, br';
-      headers['sec-fetch-dest'] = 'document';
-      headers['sec-fetch-mode'] = 'navigate';
-      headers['sec-fetch-site'] = 'cross-site';
-      headers['upgrade-insecure-requests'] = '1';
-    } else if (domain.includes('etsy')) {
-      headers['Accept-Language'] = 'en-US,en;q=0.9';
-      headers['sec-ch-ua'] = '"Not_A Brand";v="8", "Chromium";v="120", "Google Chrome";v="120"';
-      headers['sec-ch-ua-mobile'] = '?0';
-      headers['sec-ch-ua-platform'] = '"Windows"';
-      headers['Referer'] = 'https://www.google.com/';
-      headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8';
-      headers['Accept-Encoding'] = 'gzip, deflate, br';
-      headers['sec-fetch-dest'] = 'document';
-      headers['sec-fetch-mode'] = 'navigate';
-      headers['sec-fetch-site'] = 'cross-site';
-      headers['sec-fetch-user'] = '?1';
-      headers['upgrade-insecure-requests'] = '1';
     }
 
-    console.log(`Attempting to scrape: ${domain} (attempt ${attempt})`);
-
-    // Make the request with timeout
+    // Timeout via AbortController
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), timeout);
+    const tid = setTimeout(() => controller.abort(), Math.max(1000, Number(timeout)));
 
+    let response;
     try {
-      const response = await fetch(url, {
+      response = await fetch(url, {
         method: 'GET',
         headers,
         signal: controller.signal,
-        follow: 5, // Allow up to 5 redirects
-        compress: true
+        redirect: 'follow', // default, included for clarity
       });
+    } catch (err) {
+      clearTimeout(tid);
+      if (err?.name === 'AbortError') {
+        return res.status(408).json({ error: 'Request timeout', timeout: true });
+      }
+      // DNS or network errors often have a code on Node
+      if (err?.code === 'ENOTFOUND' || err?.code === 'ECONNREFUSED') {
+        return res.status(503).json({ error: 'Website unavailable', networkError: true });
+      }
+      return res.status(500).json({ error: `Network error: ${err.message}`, networkError: true });
+    }
+    clearTimeout(tid);
 
-      clearTimeout(timeoutId);
-
-      if (!response.ok) {
-        console.error(`HTTP ${response.status} for ${domain}`);
-        
-        if (response.status === 403) {
-          return res.status(403).json({ 
-            error: 'Access blocked by website',
-            blocked: true,
-            status: response.status 
-          });
-        }
-        
-        if (response.status === 429) {
-          return res.status(429).json({ 
-            error: 'Rate limited by website',
-            rateLimited: true,
-            status: response.status 
-          });
-        }
-
-        return res.status(response.status).json({ 
-          error: `HTTP ${response.status}: ${response.statusText}`,
-          status: response.status 
+    // Non-2xx handling
+    if (!response.ok) {
+      // Some sites return a 200 with a bot page, so status alone is not enough,
+      // but still handle obvious blocks
+      if (response.status === 403) {
+        return res.status(403).json({
+          error: 'Access blocked by website',
+          blocked: true,
+          status: response.status,
         });
       }
-
-      const html = await response.text();
-      
-      // Basic validation that we got actual HTML content
-      if (!html || html.length < 100) {
-        return res.status(400).json({ 
-          error: 'Invalid or empty response from website' 
+      if (response.status === 429) {
+        return res.status(429).json({
+          error: 'Rate limited by website',
+          rateLimited: true,
+          status: response.status,
         });
       }
-
-      // Check for common anti-bot indicators
-      const htmlLower = html.toLowerCase();
-      if (htmlLower.includes('captcha') || 
-          htmlLower.includes('verify you are human') ||
-          htmlLower.includes('access denied') ||
-          htmlLower.includes('blocked')) {
-        return res.status(403).json({ 
-          error: 'Request blocked by anti-bot protection',
-          blocked: true 
-        });
-      }
-
-      console.log(`Successfully scraped ${domain}: ${html.length} characters`);
-
-      return res.status(200).json({ 
-        html,
-        length: html.length,
-        domain,
-        timestamp: Date.now(),
-        attempt
-      });
-
-    } catch (fetchError) {
-      clearTimeout(timeoutId);
-      
-      if (fetchError.name === 'AbortError') {
-        console.error(`Timeout scraping ${domain}`);
-        return res.status(408).json({ 
-          error: 'Request timeout',
-          timeout: true 
-        });
-      }
-
-      console.error(`Fetch error for ${domain}:`, fetchError.message);
-      
-      // Network errors
-      if (fetchError.code === 'ENOTFOUND' || fetchError.code === 'ECONNREFUSED') {
-        return res.status(503).json({ 
-          error: 'Website unavailable',
-          networkError: true 
-        });
-      }
-
-      return res.status(500).json({ 
-        error: 'Network error: ' + fetchError.message,
-        networkError: true 
+      return res.status(response.status).json({
+        error: `HTTP ${response.status}: ${response.statusText || 'Error'}`,
+        status: response.status,
       });
     }
 
+    const html = await response.text();
+
+    // Basic validation
+    if (!html || html.length < MAX_HTML_MIN_LENGTH) {
+      return res.status(400).json({ error: 'Invalid or empty response from website' });
+    }
+
+    // Anti-bot markers
+    const htmlLower = html.toLowerCase();
+    const botMarkers = [
+      'captcha',
+      'verify you are human',
+      'access denied',
+      'request blocked',
+      'pardon the interruption',
+      'cloudflare',
+      'attention required',
+    ];
+    if (botMarkers.some((m) => htmlLower.includes(m))) {
+      return res.status(403).json({
+        error: 'Request blocked by anti-bot protection',
+        blocked: true,
+      });
+    }
+
+    return res.status(200).json({
+      html,
+      length: html.length,
+      domain,
+      timestamp: Date.now(),
+      attempt: Number(attempt) || 1,
+    });
   } catch (error) {
-    console.error('Scraping handler error:', error);
-    return res.status(500).json({ 
-      error: 'Internal server error: ' + error.message,
-      timestamp: Date.now()
+    // Catch-all
+    return res.status(500).json({
+      error: `Internal server error: ${error.message}`,
+      timestamp: Date.now(),
     });
   }
 }
 
-// Cleanup rate limits periodically
-setInterval(() => {
-  if (global.rateLimits) {
-    const now = Date.now();
-    Object.keys(global.rateLimits).forEach(key => {
-      if (now - global.rateLimits[key] > 300000) { // 5 minutes
-        delete global.rateLimits[key];
-      }
-    });
+// Purge stale rate limit entries without setInterval
+function purgeStaleRateLimits() {
+  if (!rlStore?.size) return;
+  const now = Date.now();
+  for (const [key, ts] of rlStore.entries()) {
+    if (now - ts > RATE_LIMIT_TTL_MS) {
+      rlStore.delete(key);
+    }
   }
-}, 60000); // Clean up every minute
+}
